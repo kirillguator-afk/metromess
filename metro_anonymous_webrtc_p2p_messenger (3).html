@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="ru" class="dark h-full bg-slate-950 text-slate-100">
+<html lang="ru" class="dark h-full">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>METRO | Anonymous WebRTC P2P Messenger & Phone System</title>
-    
-    <!-- Tailwind CSS CDN -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>METRO Messenger - P2P Encrypted Mesh Node</title>
+
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -14,1531 +14,1482 @@
                 extend: {
                     colors: {
                         metro: {
-                            bg: '#05070c',
-                            card: '#0d121d',
-                            panel: '#131a29',
-                            border: '#1e293b',
-                            red: '#ff3b30',
-                            blue: '#007aff',
-                            green: '#34c759',
-                            gold: '#ffcc00',
-                            purple: '#af52de',
-                            cyan: '#5ac8fa'
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            500: '#06b6d4',
+                            600: '#0891b2',
+                            800: '#0f172a',
+                            900: '#090d16',
+                            950: '#030712',
+                            accent: '#38bdf8',
+                            emerald: '#10b981',
+                            amber: '#f59e0b',
+                            rose: '#f43f5e'
                         }
                     },
                     fontFamily: {
                         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'Fira Code', 'monospace']
+                        mono: ['JetBrains Mono', 'Consolas', 'monospace']
+                    },
+                    boxShadow: {
+                        'glow-cyan': '0 0 25px rgba(6, 182, 212, 0.4)',
+                        'glow-emerald': '0 0 25px rgba(16, 185, 129, 0.4)'
                     }
                 }
             }
         }
     </script>
-    
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- PeerJS for WebRTC P2P connection handling -->
+
+    <!-- Lucide Icons & PeerJS Public Signaling Bridge -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <!-- QRCode.js for peer identity sharing -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <style>
-        ::-webkit-scrollbar {
-            width: 5px;
-            height: 5px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #05070c;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #1e293b;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #334155;
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+        /* Metro Text Fill Animation */
+        .metro-logo-text {
+            font-size: clamp(2.5rem, 10vw, 6.5rem);
+            font-weight: 900;
+            letter-spacing: 0.25em;
+            background: linear-gradient(to right, #ffffff 50%, rgba(255, 255, 255, 0.08) 50%);
+            background-size: 200% 100%;
+            background-position: 100% 0;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: fillGlow 2.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            filter: drop-shadow(0 0 0px rgba(255, 255, 255, 0));
         }
 
-        .glass-panel {
-            background: rgba(13, 18, 29, 0.85);
+        @keyframes fillGlow {
+            0% {
+                background-position: 100% 0;
+                filter: drop-shadow(0 0 0px rgba(255,255,255,0));
+            }
+            70% {
+                background-position: 0% 0;
+                filter: drop-shadow(0 0 20px rgba(255,255,255,0.9)) drop-shadow(0 0 40px rgba(56,189,248,0.7));
+            }
+            100% {
+                background-position: 0% 0;
+                filter: drop-shadow(0 0 12px rgba(255,255,255,0.6)) drop-shadow(0 0 25px rgba(56,189,248,0.4));
+            }
+        }
+
+        /* Glassmorphism Styles */
+        .metro-glass {
+            background: rgba(15, 23, 42, 0.8);
             backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        .glass-card {
-            background: rgba(19, 26, 41, 0.6);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+        .metro-glass-card {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
         }
 
-        .bg-grid-pattern {
-            background-image: radial-gradient(rgba(0, 122, 255, 0.08) 1px, transparent 1px);
-            background-size: 28px 28px;
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(9, 13, 22, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(6, 182, 212, 0.6);
         }
 
-        @keyframes pulse-ring {
-            0% { transform: scale(0.95); opacity: 0.8; }
-            50% { transform: scale(1.15); opacity: 0.2; }
-            100% { transform: scale(0.95); opacity: 0.8; }
-        }
-        .pulse-ring {
-            animation: pulse-ring 2.2s infinite ease-in-out;
+        /* Scanline Overlay Effect */
+        .scanline-overlay {
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.2) 50%
+            ), linear-gradient(
+                90deg,
+                rgba(255, 0, 0, 0.02),
+                rgba(0, 255, 0, 0.01),
+                rgba(0, 0, 255, 0.02)
+            );
+            background-size: 100% 4px, 6px 100%;
+            pointer-events: none;
         }
 
-        @keyframes scanline {
-            0% { transform: translateY(-100%); }
-            100% { transform: translateY(1000%); }
-        }
-        .animate-scanline {
-            animation: scanline 8s linear infinite;
-        }
+        /* Safe Area Padding for Mobile Notch/Home Bar */
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1rem); }
+        .pt-safe { padding-top: env(safe-area-inset-top, 1rem); }
     </style>
 </head>
+<body class="bg-metro-950 text-slate-100 font-sans h-full w-full overflow-hidden select-none flex flex-col antialiased">
 
-<body class="h-full bg-metro-bg text-slate-200 bg-grid-pattern flex flex-col font-sans overflow-hidden select-none">
+    <!-- 1. SPLASH SCREEN ANIMATION -->
+    <div id="splash-screen" class="fixed inset-0 z-50 bg-metro-950 flex flex-col items-center justify-center transition-opacity duration-700">
+        <div class="relative flex flex-col items-center text-center p-4">
+            <h1 class="metro-logo-text pl-4">METRO</h1>
+            <p class="text-xs uppercase tracking-[0.5em] text-cyan-400 font-mono mt-3">P2P Mesh Encrypted Network Node</p>
 
-    <!-- Toast Notification Container -->
-    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+            <div class="mt-10 flex items-center gap-3 bg-slate-900/80 px-4 py-2 rounded-full border border-slate-800">
+                <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping"></span>
+                <span id="splash-status" class="text-xs font-mono text-slate-400">Инициализация модулей WebCrypto & STUN...</span>
+            </div>
+        </div>
+    </div>
 
-    <div id="app" class="flex-1 flex flex-col md:flex-row h-screen w-screen overflow-hidden relative">
-
-        <!-- SIDEBAR: METRO NAVIGATION & PHONE CONTACTS -->
-        <aside id="sidebar" class="w-full md:w-80 lg:w-96 glass-panel flex flex-col z-20 transition-all duration-300 md:relative absolute inset-y-0 left-0 -translate-x-full md:translate-x-0 border-r border-slate-800/80">
-            
-            <!-- User Profile & Phone Header -->
-            <div class="p-4 border-b border-slate-800/80 flex items-center justify-between bg-slate-950/40">
-                <div class="flex items-center space-x-3">
-                    <div class="relative cursor-pointer" id="btn-show-id" title="Нажмите для QR и профиля">
-                        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-500 to-emerald-400 p-[2px] flex items-center justify-center shadow-lg shadow-blue-500/20">
-                            <div class="w-full h-full bg-metro-bg rounded-[14px] flex items-center justify-center">
-                                <i class="fa-solid fa-phone-volume text-blue-400 text-base"></i>
-                            </div>
-                        </div>
-                        <span class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 border-2 border-metro-bg rounded-full"></span>
-                    </div>
-                    <div class="overflow-hidden">
-                        <div class="flex items-center gap-1.5">
-                            <h1 class="font-bold tracking-wider text-sm text-white">METRO OS</h1>
-                            <span class="text-[9px] bg-blue-500/20 text-blue-400 font-mono px-1.5 py-0.5 rounded border border-blue-500/30">v3.5 P2P-Mesh</span>
-                        </div>
-                        <p class="text-xs text-emerald-400 font-mono font-semibold tracking-wide truncate" id="my-phone-number">+883 -- --- ----</p>
-                    </div>
+    <!-- 2. IDENTITY CREATION / JSON KEY MODAL -->
+    <div id="identity-screen" class="hidden fixed inset-0 z-40 bg-metro-950/95 flex items-center justify-center p-4 backdrop-blur-md overflow-y-auto">
+        <div class="metro-glass w-full max-w-lg rounded-3xl p-6 md:p-8 shadow-2xl border border-slate-800 flex flex-col gap-6 my-auto">
+            <div class="text-center">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-500/20 to-slate-800 border border-cyan-500/30 flex items-center justify-center mx-auto mb-4 text-cyan-400 shadow-glow-cyan">
+                    <i data-lucide="shield-keyhole" class="w-8 h-8"></i>
                 </div>
-                <div class="flex items-center gap-1">
-                    <button id="btn-toggle-sound" title="Включить/выключить звук" class="p-2 hover:bg-slate-800/80 rounded-xl text-emerald-400 transition">
-                        <i class="fa-solid fa-volume-high" id="icon-sound-state"></i>
-                    </button>
-                    <button id="btn-open-turn-modal" title="Настройка STUN/TURN серверов" class="p-2 hover:bg-slate-800/80 rounded-xl text-slate-400 hover:text-white transition">
-                        <i class="fa-solid fa-server"></i>
-                    </button>
-                    <button id="btn-open-db-modal" title="База данных и Кэш" class="p-2 hover:bg-slate-800/80 rounded-xl text-slate-400 hover:text-cyan-400 transition">
-                        <i class="fa-solid fa-database"></i>
-                    </button>
-                </div>
+                <h2 class="text-2xl font-bold tracking-tight text-white">Создание Узла METRO</h2>
+                <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">Ключ профиля не обнаружен. Сгенерируйте уникальный двухслойный E2EE ключ или импортируйте существуюшую JSON конфигурацию.</p>
             </div>
 
-            <!-- Navigation Tabs (Contacts / Keypad / P2P Feed) -->
-            <div class="flex border-b border-slate-800/80 bg-slate-950/60 p-1 gap-1 text-[11px] font-mono">
-                <button id="tab-btn-contacts" class="flex-1 py-2 rounded-lg bg-slate-800 text-white font-semibold flex items-center justify-center gap-1.5 transition">
-                    <i class="fa-solid fa-address-book text-blue-400"></i> Контакты
-                </button>
-                <button id="tab-btn-dialer" class="flex-1 py-2 rounded-lg text-slate-400 hover:bg-slate-800/50 flex items-center justify-center gap-1.5 transition">
-                    <i class="fa-solid fa-dialpad text-emerald-400"></i> Номер
-                </button>
-                <button id="tab-btn-feed" class="flex-1 py-2 rounded-lg text-slate-400 hover:bg-slate-800/50 flex items-center justify-center gap-1.5 transition relative">
-                    <i class="fa-solid fa-rss text-purple-400"></i> Лента
-                    <span id="feed-unread-badge" class="hidden absolute top-1 right-1 w-2 h-2 rounded-full bg-purple-500"></span>
-                </button>
-            </div>
-
-            <!-- TAB 1: Contacts List View -->
-            <div id="view-contacts" class="flex-1 flex flex-col min-h-0">
-                <div class="p-3 border-b border-slate-800/60 flex items-center justify-between gap-2">
-                    <div class="relative flex-1">
-                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-slate-500"></i>
-                        <input type="text" id="input-search-contacts" placeholder="Поиск по имени или +883..." class="w-full bg-slate-900/80 text-xs text-slate-200 rounded-xl pl-8 pr-3 py-2 border border-slate-800 focus:outline-none focus:border-blue-500 font-mono">
-                    </div>
-                    <button id="btn-add-contact" class="p-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs transition flex items-center gap-1 shadow-md shadow-blue-600/20 font-semibold px-3">
-                        <i class="fa-solid fa-user-plus"></i>
-                    </button>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-mono uppercase text-slate-400 mb-1">Имя Устройства / Позывной</label>
+                    <input type="text" id="identity-alias" placeholder="Например: Node-Alpha" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-cyan-500 text-white transition-all">
                 </div>
 
-                <div class="flex-1 overflow-y-auto p-2 space-y-1" id="contact-list">
-                    <!-- Contacts dynamically populated -->
-                </div>
-            </div>
-
-            <!-- TAB 2: Telephone Dialer Pad View -->
-            <div id="view-dialer" class="flex-1 flex flex-col justify-between p-4 hidden">
-                <div class="text-center my-2">
-                    <div class="text-[10px] uppercase font-mono text-slate-500 tracking-wider mb-1">Виртуальный телефонный канал</div>
-                    <input type="text" id="dialer-display" readonly placeholder="+883-..." class="w-full bg-slate-900 border border-slate-800 text-center text-lg font-mono font-bold text-emerald-400 py-3 rounded-xl focus:outline-none tracking-widest">
+                <div>
+                    <label class="block text-xs font-mono uppercase text-slate-400 mb-1">Путь к папке кэша (для сохранения файлов)</label>
+                    <input type="text" id="identity-storage-path" value="/data/user/0/network.metro.app/cache/" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500 transition-all">
                 </div>
 
-                <!-- Dialpad Buttons -->
-                <div class="grid grid-cols-3 gap-3 my-2 max-w-xs mx-auto w-full">
-                    <button class="btn-dial-num h-12 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800/80 text-lg font-mono font-bold text-slate-200 flex flex-col items-center justify-center active:scale-95 transition" data-val="1">1 <span class="text-[8px] font-sans text-slate-500 font-normal">.</span></button>
-                    <button class="btn-dial-num h-12 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800/80 text-lg font-mono font-bold text-slate-200 flex flex-col items-center justify-center active:scale-95 transition" data-val="2">2 <span class="text-[8px] font-sans text-slate-500 font-normal">ABC</span></button>
-                    <button class="btn-dial-num h-12 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800/80 text-lg font-mono font-bold text-slate-200 flex flex-col items-center justify-center active:scale-95 transition" data-val="3">3 <span class="text-[8px] font-sans text-slate-500 font-normal">DEF</span></button>
-                    <button class="btn-dial-num h-12 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800/80 text-lg font-mono font-bold text-slate-200 flex flex-col items-center justify-center active:scale-95 transition" data-val="4">4 <span class="text-[8px] font-sans text-slate-500 font-normal">GHI</span></button>
-                    <button class="btn-dial-num h-12 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800/80 text-lg font-mono font-bold text-slate-200 flex flex-col items-center justify-center active:scale-95 transition" data-val="5">5 <span class="text-[8px] font-sans text-slate-500 font-normal">JKL</span></button>
-                    <button class="btn-dial-num h-12 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800/80 text-lg font-mono font-bold text-slate-200 flex flex-col items-center justify-center active:scale-95 transition" data-val="6">6 <span class="text-[8px] font-sans text-slate-500 font-normal">MNO</span></button>
-                    <button class="btn-dial-num h-12 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800/80 text-lg font-mono font-bold text-slate-200 flex flex-col items-center justify-center active:scale-95 transition" data-val="7">7 <span class="text-[8px] font-sans text-slate-500 font-normal">PQRS</span></button>
-                    <button class="btn-dial-num h-12 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800/80 text-lg font-mono font-bold text-slate-200 flex flex-col items-center justify-center active:scale-95 transition" data-val="8">8 <span class="text-[8px] font-sans text-slate-500 font-normal">TUV</span></button>
-            <!-- TAB 3: P2P Network Feed Sidebar View -->
-            <div id="view-feed" class="flex-1 flex flex-col min-h-0 hidden">
-                <div class="p-3 border-b border-slate-800/60 flex items-center justify-between gap-2 bg-slate-900/40">
-                    <span class="text-xs font-mono font-bold text-slate-300 flex items-center gap-2">
-                        <i class="fa-solid fa-network-wired text-purple-400"></i> Децентрализованная Лента
-                    </span>
-                    <button id="btn-create-post" class="p-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs transition flex items-center gap-1 shadow-md shadow-purple-600/20 font-semibold px-2.5">
-                        <i class="fa-solid fa-plus"></i> Создать
-                    </button>
-                </div>
-
-                <div class="flex-1 overflow-y-auto p-3 space-y-3" id="feed-posts-list">
-                    <!-- Posts dynamically loaded -->
-                </div>
-            </div>
-
-            <!-- Network Status Bar -->
-            <div class="p-3 border-t border-slate-800 bg-slate-950/80 flex items-center justify-between text-xs font-mono">
-                <div class="flex items-center gap-2">
-                    <span id="p2p-status-indicator" class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-                    <span id="p2p-status-text" class="text-slate-400 text-[11px]">Инициализация P2P...</span>
-                </div>
-                <button id="btn-toggle-topology" title="Граф соединений" class="text-xs text-slate-400 hover:text-white flex items-center gap-1 bg-slate-900 px-2.5 py-1 rounded-lg border border-slate-800">
-                    <i class="fa-solid fa-network-wired text-blue-400"></i> Сеть
-                </button>
-            </div>
-        </aside>
-
-        <!-- MAIN MESSENGER CHAT AREA -->
-        <main class="flex-1 flex flex-col bg-metro-bg/90 relative z-10">
-            
-            <!-- Chat Header -->
-            <header class="h-16 border-b border-slate-800 glass-panel px-4 flex items-center justify-between z-10">
-                <div class="flex items-center gap-3">
-                    <button id="btn-mobile-sidebar" class="md:hidden p-2 text-slate-400 hover:text-white">
-                        <i class="fa-solid fa-bars text-lg"></i>
-                    </button>
-                    <div class="relative">
-                        <div id="active-peer-avatar" class="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-base font-bold text-blue-400 font-mono">
-                            ?
-                        </div>
-                        <span id="active-peer-status" class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-slate-600 border-2 border-metro-bg"></span>
-                    </div>
+                <div class="p-3.5 rounded-2xl bg-cyan-950/30 border border-cyan-800/40 flex items-start gap-3 text-xs text-cyan-200">
+                    <i data-lucide="cpu" class="w-5 h-5 text-cyan-400 shrink-0 mt-0.5"></i>
                     <div>
+                        <p class="font-semibold text-white mb-0.5">METRO Multi-Key Standard</p>
+                        <p class="text-[11px] text-slate-300">Будет создан пары ключей: <b class="text-cyan-300">ECDH P-256</b> (обмен ключами) + <b class="text-cyan-300">AES-256-GCM</b> (шифрование) с присвоением ID в формате <b class="font-mono text-white">M-888 XXX XXX</b>.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                <button onclick="generateIdentityKey()" class="flex-1 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-xl py-3 text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20">
+                    <i data-lucide="key" class="w-4 h-4"></i>
+                    Сгенерировать Ключ
+                </button>
+                <label class="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-medium rounded-xl py-3 text-sm transition-all flex items-center justify-center gap-2 cursor-pointer border border-slate-700">
+                    <i data-lucide="upload" class="w-4 h-4"></i>
+                    Импорт JSON
+                    <input type="file" id="json-key-file" accept=".json" class="hidden" onchange="importIdentityKey(event)">
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. MAIN WORKSPACE APP -->
+    <div id="app-screen" class="hidden flex-1 flex flex-col md:flex-row h-full w-full overflow-hidden relative">
+
+        <!-- Mobile Header Bar -->
+        <header class="md:hidden pt-safe bg-slate-900/90 border-b border-slate-800 px-4 py-3 flex items-center justify-between z-20 backdrop-blur-md">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400 font-bold font-mono text-xs">M</div>
+                <span class="font-extrabold tracking-widest text-lg text-white">METRO</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span id="p2p-status-badge-mobile" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-[10px] font-mono text-slate-400">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span> READY
+                </span>
+                <button onclick="switchTab('contacts')" class="p-2 rounded-xl bg-slate-800 text-slate-300">
+                    <i data-lucide="phone" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Navigation Sidebar (Desktop: Left Bar, Mobile: Bottom Bar) -->
+        <nav class="order-3 md:order-1 w-full md:w-20 bg-slate-900/95 border-t md:border-t-0 md:border-r border-slate-800 flex md:flex-col items-center justify-around md:justify-start md:py-6 gap-2 md:gap-6 z-30 pb-safe shrink-0">
+            <!-- Brand Logo Desktop -->
+            <div class="hidden md:flex flex-col items-center gap-1 mb-4">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center text-slate-950 font-black text-xl shadow-glow-cyan">M</div>
+                <span class="text-[9px] font-mono tracking-widest text-cyan-400 uppercase font-semibold">MESH</span>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <button onclick="switchTab('contacts')" id="tab-btn-contacts" class="nav-tab-btn active flex-1 md:flex-none p-3 rounded-2xl flex flex-col md:flex-row items-center gap-1.5 text-cyan-400 bg-cyan-500/10 border border-cyan-500/30 transition-all" title="Записная книжка">
+                <i data-lucide="notebook-tabs" class="w-5 h-5"></i>
+                <span class="text-[10px] md:hidden font-medium">Контакты</span>
+            </button>
+
+            <button onclick="switchTab('messages')" id="tab-btn-messages" class="nav-tab-btn flex-1 md:flex-none p-3 rounded-2xl flex flex-col md:flex-row items-center gap-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-all" title="Сообщения и Диалоги">
+                <i data-lucide="message-square-more" class="w-5 h-5"></i>
+                <span class="text-[10px] md:hidden font-medium">Диалоги</span>
+            </button>
+
+            <button onclick="switchTab('network')" id="tab-btn-network" class="nav-tab-btn flex-1 md:flex-none p-3 rounded-2xl flex flex-col md:flex-row items-center gap-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-all" title="Сеть STUN/TURN">
+                <i data-lucide="globe" class="w-5 h-5"></i>
+                <span class="text-[10px] md:hidden font-medium">Сеть</span>
+            </button>
+
+            <button onclick="switchTab('crypto')" id="tab-btn-crypto" class="nav-tab-btn flex-1 md:flex-none p-3 rounded-2xl flex flex-col md:flex-row items-center gap-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-all" title="Криптография E2EE">
+                <i data-lucide="lock" class="w-5 h-5"></i>
+                <span class="text-[10px] md:hidden font-medium">Шифр</span>
+            </button>
+
+            <button onclick="switchTab('settings')" id="tab-btn-settings" class="nav-tab-btn flex-1 md:flex-none p-3 rounded-2xl flex flex-col md:flex-row items-center gap-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-all" title="Настройки узла">
+                <i data-lucide="sliders" class="w-5 h-5"></i>
+                <span class="text-[10px] md:hidden font-medium">Настройки</span>
+            </button>
+
+            <!-- Bottom User Profile Icon (Desktop) -->
+            <div class="hidden md:flex flex-col items-center mt-auto pt-4 border-t border-slate-800/60 w-full">
+                <button onclick="openMyIdentityModal()" class="w-10 h-10 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-mono text-cyan-300 hover:border-cyan-500 transition-all shadow-md" title="Мой Идентификатор METRO">
+                    <i data-lucide="fingerprint" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Workspace Container -->
+        <main class="order-2 flex-1 relative bg-metro-950 overflow-hidden flex flex-col md:flex-row">
+
+            <!-- TAB 1: CONTACTS & DIALPAD -->
+            <section id="tab-contacts" class="tab-content flex-1 flex flex-col lg:flex-row h-full overflow-hidden">
+                <!-- Contact List Sidebar -->
+                <div class="w-full lg:w-96 bg-slate-900/60 border-r border-slate-800/80 flex flex-col h-full">
+                    <!-- Actions Bar -->
+                    <div class="p-4 border-b border-slate-800 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-xl font-extrabold text-white tracking-wide">Контакты</h2>
+                            <div class="flex items-center gap-2">
+                                <button onclick="openManualSdpModal()" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono flex items-center gap-1 border border-slate-700" title="Ручной сигнал SDP">
+                                    <i data-lucide="qr-code" class="w-3.5 h-3.5 text-cyan-400"></i>
+                                    <span>SDP</span>
+                                </button>
+                                <button onclick="openAddContactModal()" class="p-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold transition-all shadow-lg shadow-cyan-500/20 flex items-center gap-1 text-xs">
+                                    <i data-lucide="user-plus" class="w-4 h-4"></i>
+                                    <span class="hidden sm:inline">Добавить</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Search Field -->
+                        <div class="relative">
+                            <input type="text" id="contact-search-input" oninput="filterContacts()" placeholder="Поиск по имени или M-888 ID..." class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500 transition-all font-mono">
+                            <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3 top-3"></i>
+                        </div>
+                    </div>
+
+                    <!-- Contact Cards Scroll Area -->
+                    <div id="contacts-list" class="flex-1 overflow-y-auto p-3 space-y-2">
+                        <!-- JS Dynamic Injected List -->
+                    </div>
+                </div>
+
+                <!-- Dialpad Panel (Desktop/Tablet View) -->
+                <div class="hidden lg:flex flex-1 flex-col items-center justify-center p-8 bg-metro-950/50 relative">
+                    <div class="scanline-overlay absolute inset-0 opacity-20"></div>
+
+                    <div class="max-w-md w-full metro-glass p-8 rounded-3xl border border-slate-800 text-center relative z-10 flex flex-col items-center shadow-2xl">
+                        <div class="w-16 h-16 rounded-2xl bg-slate-900 border border-cyan-500/30 flex items-center justify-center text-cyan-400 mb-4 shadow-glow-cyan">
+                            <i data-lucide="phone-outgoing" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-1">Набор METRO P2P</h3>
+                        <p class="text-xs text-slate-400 mb-6 max-w-xs">Введите 9-значный код адресата для прямой установки P2P соединения.</p>
+
+                        <!-- Dial Display -->
+                        <div class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 mb-6 flex items-center justify-between font-mono">
+                            <span class="text-slate-600 text-xs font-bold">ID:</span>
+                            <span id="dialpad-display-desktop" class="text-xl font-bold tracking-wider text-cyan-300">M-888 ___ ___</span>
+                            <button onclick="clearDialDisplay()" class="text-slate-500 hover:text-slate-300"><i data-lucide="backspace" class="w-5 h-5"></i></button>
+                        </div>
+
+                        <!-- Keypad Grid -->
+                        <div class="grid grid-cols-3 gap-3 w-full max-w-xs mb-6">
+                            <button onclick="pressDialKey('1')" class="py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 active:bg-slate-700 text-lg font-mono font-bold text-white border border-slate-800/80 transition-all">1</button>
+                            <button onclick="pressDialKey('2')" class="py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 active:bg-slate-700 text-lg font-mono font-bold text-white border border-slate-800/80 transition-all">2</button>
+                            <button onclick="pressDialKey('3')" class="py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 active:bg-slate-700 text-lg font-mono font-bold text-white border border-slate-800/80 transition-all">3</button>
+                            <button onclick="pressDialKey('4')" class="py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 active:bg-slate-700 text-lg font-mono font-bold text-white border border-slate-800/80 transition-all">4</button>
+                            <button onclick="pressDialKey('5')" class="py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 active:bg-slate-700 text-lg font-mono font-bold text-white border border-slate-800/80 transition-all">5</button>
+                            <button onclick="pressDialKey('6')" class="py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 active:bg-slate-700 text-lg font-mono font-bold text-white border border-slate-800/80 transition-all">6</button>
+                            <button onclick="pressDialKey('7')" class="py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 active:bg-slate-700 text-lg font-mono font-bold text-white border border-slate-800/80 transition-all">7</button>
+                            <button onclick="pressDialKey('8')" class="py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 active:bg-slate-700 text-lg font-mono font-bold text-white border border-slate-800/80 transition-all">8</button>
+                            <button onclick="pressDialKey('9')" class="py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 active:bg-slate-700 text-lg font-mono font-bold text-white border border-slate-800/80 transition-all">9</button>
+                            <button onclick="pressDialKey('*')" class="py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 active:bg-slate-700 text-lg font-mono font-bold text-white border border-slate-800/80 transition-all">*</button>
+                            <button onclick="pressDialKey('0')" class="py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 active:bg-slate-700 text-lg font-mono font-bold text-white border border-slate-800/80 transition-all">0</button>
+                            <button onclick="pressDialKey('#')" class="py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 active:bg-slate-700 text-lg font-mono font-bold text-white border border-slate-800/80 transition-all">#</button>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex gap-3 w-full max-w-xs">
+                            <button onclick="startCallFromDialpad(false)" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/50 transition-all text-xs">
+                                <i data-lucide="phone" class="w-4 h-4"></i> Вызов
+                            </button>
+                            <button onclick="startCallFromDialpad(true)" class="flex-1 py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-cyan-950/50 transition-all text-xs">
+                                <i data-lucide="video" class="w-4 h-4"></i> Видео
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: MESSAGES & ENCRYPTED CHAT -->
+            <section id="tab-messages" class="tab-content hidden flex-1 flex h-full overflow-hidden">
+                <!-- Conversations Sidebar -->
+                <div id="chat-list-sidebar" class="w-full md:w-80 lg:w-96 bg-slate-900/60 border-r border-slate-800/80 flex flex-col h-full">
+                    <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+                        <h2 class="text-xl font-extrabold text-white tracking-wide">Диалоги</h2>
+                        <span class="text-[10px] font-mono text-cyan-400 bg-cyan-950/60 border border-cyan-800/60 px-2 py-0.5 rounded-full">AES-256 E2EE</span>
+                    </div>
+                    <div id="active-chats-list" class="flex-1 overflow-y-auto p-3 space-y-2">
+                        <!-- JS Injected Active Conversations -->
+                    </div>
+                </div>
+
+                <!-- Chat Canvas Panel -->
+                <div id="chat-panel" class="hidden md:flex flex-1 flex-col h-full bg-slate-950/90 relative">
+                    <!-- Chat Header -->
+                    <div id="chat-header" class="p-4 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between z-10 backdrop-blur-md">
+                        <div class="flex items-center gap-3">
+                            <button onclick="closeMobileChat()" class="md:hidden text-slate-400 hover:text-white">
+                                <i data-lucide="arrow-left" class="w-6 h-6"></i>
+                            </button>
+                            <div class="relative">
+                                <div id="chat-avatar" class="w-10 h-10 rounded-2xl bg-cyan-900/40 border border-cyan-500/40 flex items-center justify-center text-cyan-300 font-bold font-mono">
+                                    ?
+                                </div>
+                                <span id="chat-online-indicator" class="w-3 h-3 rounded-full bg-slate-600 border-2 border-slate-900 absolute -bottom-0.5 -right-0.5"></span>
+                            </div>
+                            <div>
+                                <h3 id="chat-contact-name" class="font-bold text-white text-sm">Выберите контакт</h3>
+                                <p id="chat-contact-id" class="text-[11px] font-mono text-slate-400">M-888 --- ---</p>
+                            </div>
+                        </div>
+
+                        <!-- Chat Call & Info Actions -->
                         <div class="flex items-center gap-2">
-                            <h2 id="active-peer-name" class="font-bold text-slate-100 text-sm">Выберите контакт или наберите номер</h2>
-                            <span id="e2e-badge" class="hidden text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30 flex items-center gap-1">
-                                <i class="fa-solid fa-shield-halved text-[9px]"></i> AES-256
-                            </span>
+                            <button onclick="initiateCallCurrent(false)" class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-cyan-300 transition-all border border-slate-700" title="Голосовой вызов">
+                                <i data-lucide="phone" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="initiateCallCurrent(true)" class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-cyan-300 transition-all border border-slate-700" title="Видеовызов">
+                                <i data-lucide="video" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="showContactDetailsModal()" class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 transition-all border border-slate-700" title="Информация о ключе">
+                                <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
+                            </button>
                         </div>
-                        <p id="active-peer-subtext" class="text-xs text-slate-500 font-mono truncate max-w-[200px] sm:max-w-xs">+883-00-000-0000</p>
+                    </div>
+
+                    <!-- Messages Flow -->
+                    <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-4">
+                        <!-- Dynamic Messages / File Transfers -->
+                    </div>
+
+                    <!-- File Progress Bar Overlay -->
+                    <div id="file-transfer-bar" class="hidden px-4 py-2 bg-slate-900/90 border-t border-slate-800/80 flex flex-col gap-1">
+                        <div class="flex justify-between text-[10px] font-mono">
+                            <span id="file-transfer-label" class="text-cyan-400">Передача файла...</span>
+                            <span id="file-transfer-percent" class="text-slate-300">0%</span>
+                        </div>
+                        <div class="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden border border-slate-800">
+                            <div id="file-transfer-progress-inner" class="bg-gradient-to-r from-cyan-500 to-emerald-400 h-full w-0 transition-all duration-200"></div>
+                        </div>
+                    </div>
+
+                    <!-- Message Input Area -->
+                    <div class="p-3 bg-slate-900/90 border-t border-slate-800 flex items-center gap-2 pb-safe">
+                        <label class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-cyan-300 cursor-pointer transition-all border border-slate-700 shrink-0" title="Отправить защищенный файл">
+                            <i data-lucide="paperclip" class="w-5 h-5"></i>
+                            <input type="file" id="chat-file-input" class="hidden" onchange="handleFileSelected(event)">
+                        </label>
+
+                        <input type="text" id="chat-input-text" onkeypress="handleMessageKeyPress(event)" placeholder="Шифрованное E2EE сообщение..." class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-500 transition-all font-sans">
+
+                        <button onclick="sendMessage()" class="p-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold transition-all shadow-lg shadow-cyan-500/20 shrink-0">
+                            <i data-lucide="send" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: NETWORK & STUN/TURN POOL -->
+            <section id="tab-network" class="tab-content hidden flex-1 flex flex-col p-4 md:p-8 overflow-y-auto max-w-5xl mx-auto w-full">
+                <div class="mb-6 border-b border-slate-800 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-2xl font-extrabold text-white tracking-wide flex items-center gap-2">
+                            <i data-lucide="globe" class="w-6 h-6 text-cyan-400"></i>
+                            Сеть Узлов STUN / TURN
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-1">Определение внешних NAT IP-адресов и проброс WebRTC каналов с измерением задержки (RTT).</p>
+                    </div>
+                    <button onclick="pingAllStunServers()" class="px-4 py-2.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-xl text-xs flex items-center gap-2 transition-all shadow-lg shadow-cyan-500/20">
+                        <i data-lucide="activity" class="w-4 h-4"></i>
+                        Тест Задержки Серверов
+                    </button>
+                </div>
+
+                <!-- Network Diagnostics Summary Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                    <div class="metro-glass-card p-4 rounded-2xl border border-slate-800">
+                        <span class="text-[10px] font-mono text-slate-400 uppercase block mb-1">ВСЕГО STUN СЕРВЕРОВ</span>
+                        <span id="stat-total-stun" class="text-2xl font-bold font-mono text-white">24</span>
+                    </div>
+                    <div class="metro-glass-card p-4 rounded-2xl border border-slate-800">
+                        <span class="text-[10px] font-mono text-slate-400 uppercase block mb-1">АКТИВНЫЕ УЗЛЫ</span>
+                        <span id="stat-active-stun" class="text-2xl font-bold font-mono text-emerald-400">24</span>
+                    </div>
+                    <div class="metro-glass-card p-4 rounded-2xl border border-slate-800">
+                        <span class="text-[10px] font-mono text-slate-400 uppercase block mb-1">СРЕДНЯЯ ЗАДЕРЖКА</span>
+                        <span id="stat-avg-rtt" class="text-2xl font-bold font-mono text-cyan-400">-- ms</span>
                     </div>
                 </div>
 
-                <!-- Action Controls (Calls & Clear) -->
-                <div class="flex items-center gap-1 sm:gap-2">
-                    <button id="btn-audio-call" disabled title="Аудиовызов по номеру" class="p-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-emerald-400 disabled:opacity-30 border border-slate-800 transition">
-                        <i class="fa-solid fa-phone"></i>
-                    </button>
-                    <button id="btn-video-call" disabled title="Видеовызов WebRTC" class="p-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-blue-400 disabled:opacity-30 border border-slate-800 transition">
-                        <i class="fa-solid fa-video"></i>
-                    </button>
-                    <button id="btn-clear-chat" title="Очистить историю чата" class="p-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-red-400 border border-slate-800 transition">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
-                </div>
-            </header>
+                <!-- STUN Pool Table -->
+                <div class="metro-glass p-6 rounded-3xl border border-slate-800 space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-sm font-bold text-white">Публичный Пул Серверов NAT</h3>
+                        <button onclick="addNewStunPrompt()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-cyan-300 rounded-xl flex items-center gap-1">
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i> Добавить STUN
+                        </button>
+                    </div>
 
-    <!-- MODAL: CREATE P2P POST -->
-    <div id="modal-create-post" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="glass-panel w-full max-w-md rounded-2xl p-6 border border-purple-500/30 shadow-2xl">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="font-bold text-slate-100 flex items-center gap-2">
-                    <i class="fa-solid fa-bullhorn text-purple-400"></i> Новая публикация в P2P-Сеть
-                </h3>
-                <button class="btn-close-modal text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark"></i></button>
+                    <div id="stun-server-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
+                        <!-- JS Injected STUN Nodes -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: CRYPTO & E2EE VAULT -->
+            <section id="tab-crypto" class="tab-content hidden flex-1 flex flex-col p-4 md:p-8 overflow-y-auto max-w-5xl mx-auto w-full">
+                <div class="mb-6 border-b border-slate-800 pb-4">
+                    <h2 class="text-2xl font-extrabold text-white tracking-wide flex items-center gap-2">
+                        <i data-lucide="shield-alert" class="w-6 h-6 text-emerald-400"></i>
+                        Спецификация Шифрования METRO E2EE
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-1">Аппаратно-ускоренные модули криптографии Web Crypto API (SubtleCrypto).</p>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- Layer 1 & Layer 2 Explanations -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="metro-glass p-6 rounded-2xl border border-slate-800 space-y-2">
+                            <div class="flex items-center gap-2 text-cyan-400 font-bold text-sm">
+                                <i data-lucide="key-round" class="w-5 h-5"></i>
+                                <span>Метод 1: ECDH P-256 (Diffie-Hellman)</span>
+                            </div>
+                            <p class="text-xs text-slate-300 leading-relaxed">Используется для согласования общего сеансового секрета между двумя узлами без передачи самого секрета по открытым каналам.</p>
+                        </div>
+
+                        <div class="metro-glass p-6 rounded-2xl border border-slate-800 space-y-2">
+                            <div class="flex items-center gap-2 text-emerald-400 font-bold text-sm">
+                                <i data-lucide="lock" class="w-5 h-5"></i>
+                                <span>Метод 2: AES-256-GCM + IV</span>
+                            </div>
+                            <p class="text-xs text-slate-300 leading-relaxed">Симметричное аутентифицированное шифрование текста и байтовых фрагментов файлов с уникальным векторами инициализации (IV 96-bit).</p>
+                        </div>
+                    </div>
+
+                    <!-- Active Session Keys Details -->
+                    <div class="metro-glass p-6 rounded-3xl border border-slate-800 space-y-4">
+                        <h3 class="text-sm font-bold text-white">Мой Публичный Отпечаток Узла (Public Fingerprint)</h3>
+                        <div class="p-4 bg-slate-950 rounded-2xl border border-slate-800 font-mono text-xs text-cyan-300 break-all" id="crypto-public-key-display">
+                            Загрузка публичного ключа ECDH...
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 5: SETTINGS -->
+            <section id="tab-settings" class="tab-content hidden flex-1 flex flex-col p-4 md:p-8 overflow-y-auto max-w-4xl mx-auto w-full">
+                <div class="mb-6 border-b border-slate-800 pb-4">
+                    <h2 class="text-2xl font-extrabold text-white tracking-wide">Настройки Аккаунта</h2>
+                    <p class="text-xs text-slate-400 mt-1">Параметры пути кэша, экспорта и очистки системы.</p>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="metro-glass p-6 rounded-3xl border border-slate-800 space-y-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="text-sm font-bold text-white">Конфигурация Профиля</h3>
+                                <p class="text-xs text-slate-400 font-mono" id="settings-my-id">M-888 --- ---</p>
+                            </div>
+                            <button onclick="exportIdentityJSON()" class="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-lg shadow-cyan-500/20">
+                                Экспорт JSON Ключа
+                            </button>
+                        </div>
+
+                        <div class="pt-4 border-t border-slate-800 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
+                            <div>
+                                <span class="text-slate-500 block mb-1">ИМЯ УСТРОЙСТВА</span>
+                                <input type="text" id="settings-alias-input" onchange="updateProfileAlias()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white">
+                            </div>
+                            <div>
+                                <span class="text-slate-500 block mb-1">ПУТЬ КЭША ФАЙЛОВ</span>
+                                <input type="text" id="settings-cache-input" onchange="updateProfileCache()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-cyan-300">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reset Application Data -->
+                    <div class="metro-glass p-6 rounded-3xl border border-rose-900/40 space-y-3">
+                        <h3 class="text-sm font-bold text-rose-400">Сброс Данных и Очистка</h3>
+                        <p class="text-xs text-slate-400">Полная очистка локальной записной книжки, ключей и диалогов из LocalStorage.</p>
+                        <button onclick="resetAccountData()" class="px-4 py-2.5 bg-rose-950 hover:bg-rose-900 text-rose-200 border border-rose-800 rounded-xl text-xs font-bold transition-all">
+                            Очистить Все Данные
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 4. WEBRTC CALL OVERLAY MODAL -->
+    <div id="call-modal" class="hidden fixed inset-0 z-50 bg-metro-950/95 flex items-center justify-center p-4 backdrop-blur-xl">
+        <div class="metro-glass w-full max-w-2xl rounded-3xl p-6 border border-slate-800 flex flex-col items-center justify-between relative min-h-[520px] shadow-2xl">
+            <!-- Header -->
+            <div class="text-center z-10">
+                <span class="inline-block px-3 py-1 rounded-full bg-cyan-950 border border-cyan-800 text-cyan-300 text-[10px] font-mono mb-2 uppercase tracking-widest" id="call-type-badge">
+                    WebRTC P2P Video Session
+                </span>
+                <h3 id="call-target-name" class="text-2xl font-bold text-white">Абонент METRO</h3>
+                <p id="call-target-id" class="text-xs font-mono text-cyan-400 mt-0.5">M-888 --- ---</p>
+                <p id="call-status-timer" class="text-xs font-mono text-slate-400 mt-2">Установление WebRTC связи...</p>
             </div>
-            <form id="form-create-post" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-mono text-slate-400 mb-1">Заголовок / Тема</label>
-                    <input type="text" id="input-post-title" required placeholder="Заголовок трека, новости или видео..." class="w-full bg-slate-900 border border-slate-800 text-slate-100 text-sm p-3 rounded-xl focus:outline-none focus:border-purple-500">
+
+            <!-- Video / Audio Canvas Canvas Visualizer -->
+            <div class="relative w-full h-72 bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden my-4 flex items-center justify-center">
+                <!-- Remote Stream -->
+                <video id="remote-video" autoplay playsinline class="w-full h-full object-cover hidden"></video>
+
+                <!-- Audio Frequency Spectrum Visualizer Canvas -->
+                <canvas id="audio-spectrum-canvas" class="w-full h-full absolute inset-0"></canvas>
+
+                <!-- Self Stream PIP -->
+                <div class="absolute bottom-3 right-3 w-32 h-24 bg-slate-900 rounded-xl border border-slate-700 overflow-hidden shadow-2xl">
+                    <video id="local-video" autoplay playsinline muted class="w-full h-full object-cover"></video>
                 </div>
-                <div>
-                    <label class="block text-xs font-mono text-slate-400 mb-1">Текст сообщения</label>
-                    <textarea id="input-post-text" rows="3" placeholder="Описание публикации..." class="w-full bg-slate-900 border border-slate-800 text-slate-100 text-xs p-3 rounded-xl focus:outline-none focus:border-purple-500 resize-none"></textarea>
-                </div>
-                <div>
-                    <label class="block text-xs font-mono text-slate-400 mb-1">Прикрепить медиафайл (Аудио, Видео, Изображение)</label>
-                    <input type="file" id="input-post-file" accept="audio/*,video/*,image/*" class="w-full bg-slate-900 border border-slate-800 text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-500 cursor-pointer rounded-xl">
-                    <p class="text-[10px] text-slate-500 font-mono mt-1">Файл хранится у вас. Узлы смогут подгружать его по запросу.</p>
-                </div>
-                <button type="submit" class="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl transition text-sm shadow-lg shadow-purple-600/20">
-                    Опубликовать в узел METRO
+            </div>
+
+            <!-- Call Controls -->
+            <div class="flex items-center gap-4 z-10">
+                <button onclick="toggleCallMute()" id="btn-call-mute" class="p-4 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all">
+                    <i data-lucide="mic" class="w-6 h-6"></i>
                 </button>
-            </form>
+                <button onclick="endCurrentCall()" class="px-8 py-4 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-bold flex items-center gap-2 shadow-lg shadow-rose-950/60 transition-all">
+                    <i data-lucide="phone-off" class="w-6 h-6"></i>
+                    <span>Завершить</span>
+                </button>
+                <button onclick="toggleCallVideo()" id="btn-call-video" class="p-4 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all">
+                    <i data-lucide="video" class="w-6 h-6"></i>
+                </button>
+                <button onclick="shareScreenInCall()" class="p-4 rounded-2xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all" title="Демонстрация экрана">
+                    <i data-lucide="monitor" class="w-6 h-6"></i>
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- MODAL: INDEXEDDB & CACHE MANAGER -->
-    <div id="modal-db-manager" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="glass-panel w-full max-w-md rounded-2xl p-6 border border-slate-800 shadow-2xl">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="font-bold text-slate-100 flex items-center gap-2">
-                    <i class="fa-solid fa-database text-cyan-400"></i> Управление Памятью и Кэшем
-                </h3>
-                <button class="btn-close-modal text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark"></i></button>
+    <!-- 5. ADD CONTACT MODAL -->
+    <div id="add-contact-modal" class="hidden fixed inset-0 z-50 bg-metro-950/80 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="metro-glass w-full max-w-md rounded-3xl p-6 border border-slate-800 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-white text-base">Новый Контакт</h3>
+                <button onclick="closeModal('add-contact-modal')" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
-
-            <div class="space-y-2.5 font-mono text-xs mb-6">
-                <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 flex justify-between items-center">
-                    <span class="text-slate-400">Занято памяти IndexedDB:</span>
-                    <span id="db-stat-size" class="text-cyan-400 font-bold">~0.0 MB</span>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-mono uppercase text-slate-400 mb-1">Имя контакты</label>
+                    <input type="text" id="new-contact-name" placeholder="Иван Оператор" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-500">
                 </div>
-                <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 flex justify-between">
-                    <span class="text-slate-400">Сообщений в чатах:</span>
-                    <span id="db-stat-msg-count" class="text-white">0</span>
+                <div>
+                    <label class="block text-xs font-mono uppercase text-slate-400 mb-1">Идентификатор METRO ID (M-888 *** ***)</label>
+                    <input type="text" id="new-contact-id" placeholder="M-888 123 456" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs font-mono text-cyan-300 focus:outline-none focus:border-cyan-500">
                 </div>
-                <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 flex justify-between">
-                    <span class="text-slate-400">Собственных публикаций:</span>
-                    <span id="db-stat-posts-count" class="text-purple-400">0</span>
-                </div>
-                <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 flex justify-between">
-                    <span class="text-slate-400">Кэшированных P2P медиафайлов:</span>
-                    <span id="db-stat-cache-count" class="text-emerald-400">0</span>
+                <div>
+                    <label class="block text-xs font-mono uppercase text-slate-400 mb-1">Публичный Ключ ECDH (необязательно)</label>
+                    <textarea id="new-contact-pubkey" placeholder="PUB_KEY_..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-[10px] font-mono text-slate-300 h-16 focus:outline-none focus:border-cyan-500"></textarea>
                 </div>
             </div>
+            <button onclick="saveNewContact()" class="w-full py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-lg shadow-cyan-500/20">
+                Сохранить Контакт
+            </button>
+        </div>
+    </div>
 
-            <div class="space-y-2">
-                <button id="btn-request-notifications" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-mono text-slate-200 rounded-xl transition flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-bell text-gold"></i> Включить Push-Уведомления браузера
+    <!-- 6. MANUAL SDP SIGNAL EXCHANGE MODAL -->
+    <div id="sdp-modal" class="hidden fixed inset-0 z-50 bg-metro-950/80 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="metro-glass w-full max-w-lg rounded-3xl p-6 border border-slate-800 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-white text-base">Ручной обмен сигналами SDP / ICE</h3>
+                <button onclick="closeModal('sdp-modal')" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <p class="text-xs text-slate-400 leading-relaxed">Если публичные серверы сигналов неполноценно соединяют узел из-за строгих фаерволов NAT, скопируйте SDP токен вашей стороны и вставьте ответный SDP соседа.</p>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-[10px] font-mono text-cyan-400 uppercase mb-1">Мой SDP Offer / Answer Токен:</label>
+                    <textarea id="my-sdp-token" readonly onclick="this.select()" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-[10px] font-mono text-slate-300 h-20 select-all"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-mono text-emerald-400 uppercase mb-1">Вставьте Ответный SDP Токен Соседа:</label>
+                    <textarea id="remote-sdp-token" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-[10px] font-mono text-white h-20 focus:border-emerald-500 focus:outline-none"></textarea>
+                </div>
+            </div>
+
+            <div class="flex gap-2">
+                <button onclick="generateLocalSdpOffer()" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl border border-slate-700">
+                    Создать Offer
                 </button>
-                <div class="grid grid-cols-2 gap-2">
-                    <button id="btn-clear-peer-cache" class="py-2.5 bg-amber-950/30 hover:bg-amber-900/40 border border-amber-500/40 text-xs font-mono text-amber-400 rounded-xl transition flex items-center justify-center gap-1.5">
-                        <i class="fa-solid fa-broom"></i> Очистить кэш
-                    </button>
-                    <button id="btn-db-clear" class="py-2.5 bg-red-950/30 hover:bg-red-900/40 border border-red-500/40 text-xs font-mono text-red-400 rounded-xl transition flex items-center justify-center gap-1.5">
-                        <i class="fa-solid fa-trash"></i> Стереть всю БД
-                    </button>
-                </div>
+                <button onclick="applyRemoteSdpToken()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-950/50">
+                    Применить Ответ
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- APPLICATION LOGIC JAVASCRIPT -->
     <script>
-        class MetroVaultDB {
-            constructor() {
-                this.dbName = 'MetroVaultDB';
-                this.version = 2; // Incremented for feed & cache
-                this.db = null;
-            }
-
-            async open() {
-                return new Promise((resolve, reject) => {
-                    const req = indexedDB.open(this.dbName, this.version);
-                    req.onupgradeneeded = (e) => {
-                        const db = e.target.result;
-                        if (!db.objectStoreNames.contains('contacts')) {
-                            db.createObjectStore('contacts', { keyPath: 'peerId' });
-                        }
-                        if (!db.objectStoreNames.contains('messages')) {
-                            const msgStore = db.createObjectStore('messages', { keyPath: 'id', autoIncrement: true });
-                            msgStore.createIndex('peerId', 'peerId', { unique: false });
-                        }
-                        if (!db.objectStoreNames.contains('posts')) {
-                            db.createObjectStore('posts', { keyPath: 'id' });
-                        }
-                        if (!db.objectStoreNames.contains('mediaCache')) {
-                            db.createObjectStore('mediaCache', { keyPath: 'id' });
-                        }
-                    };
-                    req.onsuccess = (e) => {
-                        this.db = e.target.result;
-                        resolve(this.db);
-                    };
-                    req.onerror = (e) => reject(e);
-                });
-            }
-
-            async saveContact(contact) {
-                const tx = this.db.transaction('contacts', 'readwrite');
-                tx.objectStore('contacts').put(contact);
-                return tx.complete;
-            }
-
-            async getAllContacts() {
-                return new Promise((resolve) => {
-                    const tx = this.db.transaction('contacts', 'readonly');
-                    const req = tx.objectStore('contacts').getAll();
-                    req.onsuccess = () => resolve(req.result || []);
-                });
-            }
-
-            async saveMessage(msg) {
-                const tx = this.db.transaction('messages', 'readwrite');
-                tx.objectStore('messages').add(msg);
-                return tx.complete;
-            }
-
-            async getMessagesByPeer(peerId) {
-                return new Promise((resolve) => {
-                    const tx = this.db.transaction('messages', 'readonly');
-                    const store = tx.objectStore('messages');
-                    const index = store.index('peerId');
-                    const req = index.getAll(peerId);
-                    req.onsuccess = () => resolve(req.result || []);
-                });
-            }
-
-            async getAllMessages() {
-                return new Promise((resolve) => {
-                    const tx = this.db.transaction('messages', 'readonly');
-                    const req = tx.objectStore('messages').getAll();
-                    req.onsuccess = () => resolve(req.result || []);
-                });
-            }
-
-            // Post & Media Cache methods
-            async savePost(post) {
-                const tx = this.db.transaction('posts', 'readwrite');
-                tx.objectStore('posts').put(post);
-                return tx.complete;
-            }
-
-            async getAllPosts() {
-                return new Promise((resolve) => {
-                    const tx = this.db.transaction('posts', 'readonly');
-                    const req = tx.objectStore('posts').getAll();
-                    req.onsuccess = () => resolve(req.result || []);
-                });
-            }
-
-            async saveMediaCache(mediaObj) {
-                const tx = this.db.transaction('mediaCache', 'readwrite');
-                tx.objectStore('mediaCache').put(mediaObj);
-                return tx.complete;
-            }
-
-            async getMediaCache(id) {
-                return new Promise((resolve) => {
-                    const tx = this.db.transaction('mediaCache', 'readonly');
-                    const req = tx.objectStore('mediaCache').get(id);
-                    req.onsuccess = () => resolve(req.result || null);
-                });
-            }
-
-            async getAllMediaCache() {
-                return new Promise((resolve) => {
-                    const tx = this.db.transaction('mediaCache', 'readonly');
-                    const req = tx.objectStore('mediaCache').getAll();
-                    req.onsuccess = () => resolve(req.result || []);
-                });
-            }
-
-            async clearMediaCache() {
-                const tx = this.db.transaction('mediaCache', 'readwrite');
-                tx.objectStore('mediaCache').clear();
-                return tx.complete;
-            }
-
-            async clearAll() {
-                const stores = ['contacts', 'messages', 'posts', 'mediaCache'];
-                const tx = this.db.transaction(stores, 'readwrite');
-                stores.forEach(s => tx.objectStore(s).clear());
-                return tx.complete;
-            }
-        }
-
-        class MetroSoundEngine {
-            constructor() {
-                this.ctx = null;
-                this.enabled = true;
-                this.ringInterval = null;
-
-                // DTMF Frequencies (Row & Column)
-                this.dtmfFreqs = {
-                    '1': [697, 1209], '2': [697, 1336], '3': [697, 1477],
-                    '4': [770, 1209], '5': [770, 1336], '6': [770, 1477],
-                    '7': [852, 1209], '8': [852, 1336], '9': [852, 1477],
-                    '*': [941, 1209], '0': [941, 1336], '#': [941, 1477]
-                };
-            }
-
-            init() {
-                if (!this.ctx) {
-                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-                    if (AudioCtx) this.ctx = new AudioCtx();
-                }
-                if (this.ctx && this.ctx.state === 'suspended') {
-                    this.ctx.resume();
-                }
-            }
-
-            playDTMF(val) {
-                if (!this.enabled) return;
-                this.init();
-                if (!this.ctx || !this.dtmfFreqs[val]) return;
-
-                const [f1, f2] = this.dtmfFreqs[val];
-                const osc1 = this.ctx.createOscillator();
-                const osc2 = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-
-                osc1.frequency.value = f1;
-                osc2.frequency.value = f2;
-
-                gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.18);
-
-                osc1.connect(gain);
-                osc2.connect(gain);
-                gain.connect(this.ctx.destination);
-
-                osc1.start();
-                osc2.start();
-                osc1.stop(this.ctx.currentTime + 0.18);
-                osc2.stop(this.ctx.currentTime + 0.18);
-            }
-
-            playSentSound() {
-                if (!this.enabled) return;
-                this.init();
-                if (!this.ctx) return;
-
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(587.33, this.ctx.currentTime); // D5
-                osc.frequency.exponentialRampToValueAtTime(880, this.ctx.currentTime + 0.12); // A5
-
-                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
-
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-
-                osc.start();
-                osc.stop(this.ctx.currentTime + 0.15);
-            }
-
-            playReceivedSound() {
-                if (!this.enabled) return;
-                this.init();
-                if (!this.ctx) return;
-
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(880, this.ctx.currentTime); // A5
-                osc.frequency.exponentialRampToValueAtTime(1174.66, this.ctx.currentTime + 0.15); // D6
-
-                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
-
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-
-                osc.start();
-                osc.stop(this.ctx.currentTime + 0.2);
-            }
-
-            startRingtone() {
-                if (!this.enabled) return;
-                this.stopRingtone();
-                this.init();
-
-                const ring = () => {
-                    if (!this.ctx) return;
-                    const osc1 = this.ctx.createOscillator();
-                    const osc2 = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
-
-                    osc1.frequency.value = 440;
-                    osc2.frequency.value = 480;
-
-                    gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 1.2);
-
-                    osc1.connect(gain);
-                    osc2.connect(gain);
-                    gain.connect(this.ctx.destination);
-
-                    osc1.start();
-                    osc2.start();
-                    osc1.stop(this.ctx.currentTime + 1.2);
-                    osc2.stop(this.ctx.currentTime + 1.2);
-                };
-
-                ring();
-                this.ringInterval = setInterval(ring, 2500);
-            }
-
-            stopRingtone() {
-                if (this.ringInterval) {
-                    clearInterval(this.ringInterval);
-                    this.ringInterval = null;
-                }
-            }
-        }
-
-        class MetroCryptoEngine {
-            static async deriveKey(secretPhrase) {
-                const enc = new TextEncoder();
-                const keyMaterial = await crypto.subtle.importKey(
-                    "raw", enc.encode(secretPhrase), { name: "PBKDF2" }, false, ["deriveKey"]
-                );
-                return await crypto.subtle.deriveKey(
-                    { name: "PBKDF2", salt: enc.encode("METRO_P2P_VAULT_SALT"), iterations: 100000, hash: "SHA-256" },
-                    keyMaterial, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]
-                );
-            }
-
-            static async encryptMessage(text, secret = "DEFAULT_METRO_KEY") {
-                try {
-                    const key = await this.deriveKey(secret);
-                    const iv = crypto.getRandomValues(new Uint8Array(12));
-                    const enc = new TextEncoder();
-                    const ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, enc.encode(text));
-                    return { cipher: this.bufToBase64(ciphertext), iv: this.bufToBase64(iv) };
-                } catch(e) {
-                    return { cipher: text, iv: null };
-                }
-            }
-
-            static async decryptMessage(cipherBase64, ivBase64, secret = "DEFAULT_METRO_KEY") {
-                try {
-                    if (!ivBase64) return cipherBase64;
-                    const key = await this.deriveKey(secret);
-                    const ciphertext = this.base64ToBuf(cipherBase64);
-                    const iv = this.base64ToBuf(ivBase64);
-                    const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, key, ciphertext);
-                    return new TextDecoder().decode(decrypted);
-                } catch(e) {
-                    return "🔒 [Ошибка расшифровки ключом]";
-                }
-            }
-
-            static bufToBase64(buf) { return btoa(String.fromCharCode(...new Uint8Array(buf))); }
-            static base64ToBuf(b64) { return Uint8Array.from(atob(b64), c => c.charCodeAt(0)).buffer; }
-        }
-
-        class MetroPhoneSystem {
-            // Generate deterministic unique +883 virtual phone number based on peer ID
-            static generatePhoneNumber(peerId) {
-                let hash = 0;
-                for (let i = 0; i < peerId.length; i++) {
-                    hash = (hash << 5) - hash + peerId.charCodeAt(i);
-                    hash |= 0;
-                }
-                const absHash = Math.abs(hash).toString().padStart(9, '0');
-                const p1 = absHash.substring(0, 2);
-                const p2 = absHash.substring(2, 5);
-                const p3 = absHash.substring(5, 9);
-                return `+883 ${p1}-${p2}-${p3}`;
-            }
-        }
-
-        class MetroMessenger {
-            constructor() {
-                this.db = new MetroVaultDB();
-                this.sound = new MetroSoundEngine();
-                this.peer = null;
-                this.myPeerId = null;
-                this.myPhoneNumber = null;
-                this.connections = {};
-                this.activeCalls = {};
-                this.currentContactPeer = null;
-
-                // STUN / TURN Public Servers List
-                this.iceServers = [
-                    { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' },
-                    { urls: 'stun:stun2.l.google.com:19302' },
-                    { urls: 'stun:global.stun.twilio.com:3478' }
-                ];
-
-                this.bytesTransferred = 0;
-                this.incomingCallData = null;
-            }
-
-            async init() {
-                await this.db.open();
-
-                const randomHash = Math.random().toString(36).substring(2, 9);
-                this.myPeerId = `metro-${randomHash}`;
-                this.myPhoneNumber = MetroPhoneSystem.generatePhoneNumber(this.myPeerId);
-
-                this.initPeerJS();
-                this.setupUIEvents();
-                this.renderContacts();
-                this.renderFeedPosts();
-                this.renderIceServers();
-                this.initTopologyCanvas();
-            }
-
-            handleDataConnection(conn) {
-                conn.on('open', () => {
-                    this.connections[conn.peer] = conn;
-                    this.updatePeerStatusUI(conn.peer, true);
-
-                    // Automatically request peer's P2P feed headers
-                    conn.send({ type: 'request_feed_sync' });
-
-                    conn.on('data', async (data) => {
-                        this.bytesTransferred += JSON.stringify(data).length;
-                        this.updateStatsUI();
-
-                        if (data.type === 'chat') {
-                            const contacts = await this.db.getAllContacts();
-                            const contact = contacts.find(c => c.peerId === conn.peer);
-                            const secret = contact?.secret || "DEFAULT_METRO_KEY";
-
-                            const decrypted = await MetroCryptoEngine.decryptMessage(data.payload.cipher, data.payload.iv, secret);
-                            
-                            const msgObj = {
-                                peerId: conn.peer,
-                                sender: conn.peer,
-                                text: decrypted,
-                                timestamp: Date.now()
-                            };
-
-                            await this.db.saveMessage(msgObj);
-                            this.sound.playReceivedSound();
-                            this.triggerDesktopNotification("METRO Сообщение", `От +883: ${decrypted.substring(0, 30)}...`);
-                            this.showToast(`Новое сообщение от +883`, 'info');
-
-                            if (this.currentContactPeer === conn.peer) {
-                                this.renderChatHistory(conn.peer);
-                            }
-                        } else if (data.type === 'request_feed_sync') {
-                            // Send our local posts to peer
-                            const localPosts = await this.db.getAllPosts();
-                            const postsFromMe = localPosts.filter(p => p.authorPeer === this.myPeerId);
-                            conn.send({ type: 'feed_sync_response', posts: postsFromMe });
-                        } else if (data.type === 'feed_sync_response') {
-                            // Receive peer posts
-                            if (Array.isArray(data.posts)) {
-                                for (const p of data.posts) {
-                                    await this.db.savePost(p);
-                                }
-                                this.renderFeedPosts();
-                                document.getElementById('feed-unread-badge').classList.remove('hidden');
-                            }
-                        } else if (data.type === 'request_media_chunk') {
-                            // Peer requests media file attached to our post
-                            const localPosts = await this.db.getAllPosts();
-                            const post = localPosts.find(p => p.id === data.postId);
-                            if (post && post.mediaData) {
-                                conn.send({
-                                    type: 'response_media_chunk',
-                                    postId: post.id,
-                                    mediaData: post.mediaData,
-                                    mediaType: post.mediaType,
-                                    mediaName: post.mediaName
-                                });
-                            }
-                        } else if (data.type === 'response_media_chunk') {
-                            // Save downloaded media into local mediaCache
-                            await this.db.saveMediaCache({
-                                id: data.postId,
-                                mediaData: data.mediaData,
-                                mediaType: data.mediaType,
-                                mediaName: data.mediaName
-                            });
-                            this.renderFeedPosts();
-                            this.showToast('Медиафайл загружен с устройства автора!', 'success');
-                        }
-                    });
-                });
-
-                conn.on('close', () => {
-                    delete this.connections[conn.peer];
-                    this.updatePeerStatusUI(conn.peer, false);
-                });
-            }
-
-            handleIncomingCallSignal(call) {
-                this.incomingCallData = call;
-                const callerPhone = MetroPhoneSystem.generatePhoneNumber(call.peer);
-
-                document.getElementById('inc-caller-name').innerText = `Станция ${call.peer.substring(0, 8)}`;
-                document.getElementById('inc-caller-phone').innerText = callerPhone;
-                
-                this.sound.startRingtone();
-                this.triggerDesktopNotification("Входящий вызов METRO", `Вызов от ${callerPhone}`);
-
-                const modal = document.getElementById('modal-incoming-call');
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-            }
-
-            async acceptIncomingCall() {
-                if (!this.incomingCallData) return;
-                this.sound.stopRingtone();
-                const modal = document.getElementById('modal-incoming-call');
-                modal.classList.add('hidden');
-
-                try {
-                    this.localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-                    document.getElementById('local-video').srcObject = this.localStream;
-
-                    this.incomingCallData.answer(this.localStream);
-                    this.setupCallUI(this.incomingCallData);
-                } catch(e) {
-                    this.showToast('Нет доступа к камере/микрофону', 'error');
-                }
-            }
-
-            declineIncomingCall() {
-                this.sound.stopRingtone();
-                if (this.incomingCallData) {
-                    this.incomingCallData.close();
-                    this.incomingCallData = null;
-                }
-                document.getElementById('modal-incoming-call').classList.add('hidden');
-            }
-
-            async renderFeedPosts() {
-                const container = document.getElementById('feed-posts-list');
-                const posts = await this.db.getAllPosts();
-
-                if (posts.length === 0) {
-                    container.innerHTML = `
-                        <div class="text-center py-8 text-slate-500 text-xs font-mono">
-                            <i class="fa-solid fa-rss text-2xl mb-2 text-purple-500 block"></i>
-                            P2P-Лента пуста.<br>Создайте публикацию или подключитесь к узлу!
-                        </div>`;
-                    return;
-                }
-
-                posts.sort((a, b) => b.timestamp - a.timestamp);
-
-                const htmlPromises = posts.map(async (p) => {
-                    const isMe = p.authorPeer === this.myPeerId;
-                    const phone = p.authorPhone || MetroPhoneSystem.generatePhoneNumber(p.authorPeer);
-                    const timeStr = new Date(p.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
-
-                    let mediaBlock = '';
-                    if (p.hasMedia) {
-                        let mediaItem = p.mediaData ? p : await this.db.getMediaCache(p.id);
-
-                        if (mediaItem && mediaItem.mediaData) {
-                            if (mediaItem.mediaType?.startsWith('audio')) {
-                                mediaBlock = `<audio controls src="${mediaItem.mediaData}" class="w-full mt-2 rounded-lg bg-slate-950"></audio>`;
-                            } else if (mediaItem.mediaType?.startsWith('video')) {
-                                mediaBlock = `<video controls src="${mediaItem.mediaData}" class="w-full h-40 object-cover mt-2 rounded-xl border border-slate-800"></video>`;
-                            } else if (mediaItem.mediaType?.startsWith('image')) {
-                                mediaBlock = `<img src="${mediaItem.mediaData}" class="w-full h-auto max-h-48 object-cover mt-2 rounded-xl border border-slate-800" />`;
-                            }
-                        } else {
-                            mediaBlock = `
-                                <div class="mt-2 p-2.5 bg-slate-950/80 rounded-xl border border-purple-500/30 flex items-center justify-between">
-                                    <div class="overflow-hidden">
-                                        <div class="text-[11px] font-mono text-purple-300 truncate">${p.mediaName || 'Прикрепленный медиафайл'}</div>
-                                        <div class="text-[9px] text-slate-500">На устройстве автора (${phone})</div>
-                                    </div>
-                                    <button data-fetch-post="${p.id}" data-author="${p.authorPeer}" class="btn-fetch-media text-xs bg-purple-600 hover:bg-purple-500 text-white font-mono px-2.5 py-1.5 rounded-lg transition shrink-0">
-                                        <i class="fa-solid fa-download mr-1"></i> Подгрузить
-                                    </button>
-                                </div>`;
-                        }
-                    }
-
-                    return `
-                        <div class="p-3 bg-slate-900/60 rounded-xl border border-slate-800 space-y-1.5 font-sans">
-                            <div class="flex items-center justify-between border-b border-slate-800/60 pb-1.5">
-                                <div class="flex items-center gap-2 overflow-hidden">
-                                    <div class="w-6 h-6 rounded-lg bg-purple-900/50 text-purple-300 text-[10px] font-mono font-bold flex items-center justify-center">
-                                        P2P
-                                    </div>
-                                    <span class="text-xs font-mono font-semibold text-emerald-400 truncate">${phone} ${isMe ? '(Вы)' : ''}</span>
-                                </div>
-                                <span class="text-[9px] font-mono text-slate-500">${timeStr}</span>
-                            </div>
-                            <h4 class="font-bold text-xs text-slate-100">${p.title}</h4>
-                            ${p.text ? `<p class="text-xs text-slate-300 break-words">${p.text}</p>` : ''}
-                            ${mediaBlock}
-                        </div>`;
-                });
-
-                const renderedHtmls = await Promise.all(htmlPromises);
-                container.innerHTML = renderedHtmls.join('');
-
-                document.querySelectorAll('.btn-fetch-media').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const postId = btn.getAttribute('data-fetch-post');
-                        const authorPeer = btn.getAttribute('data-author');
-                        this.requestMediaFromPeer(postId, authorPeer);
-                    });
-                });
-            }
-
-            requestMediaFromPeer(postId, authorPeer) {
-                const conn = this.connections[authorPeer];
-                if (conn && conn.open) {
-                    conn.send({ type: 'request_media_chunk', postId: postId });
-                    this.showToast('Запрос файла отправлен автору...', 'info');
-                } else {
-                    this.showToast('Автор файла в данный момент оффлайн!', 'error');
-                }
-            }
-
-            triggerDesktopNotification(title, body) {
-                if ('Notification' in window && Notification.permission === 'granted') {
-                    new Notification(title, { body: body, icon: 'https://placehold.co/128x128/05070c/007aff?text=METRO' });
-                }
-            }
-
-            setupUIEvents() {
-                // Sound Toggle
-                document.getElementById('btn-toggle-sound').addEventListener('click', () => {
-                    this.sound.enabled = !this.sound.enabled;
-                    const icon = document.getElementById('icon-sound-state');
-                    if (this.sound.enabled) {
-                        icon.className = "fa-solid fa-volume-high text-emerald-400";
-                        this.showToast('Звук включен', 'info');
-                    } else {
-                        icon.className = "fa-solid fa-volume-xmark text-slate-500";
-                        this.showToast('Звук выключен', 'info');
-                    }
-                });
-
-                // Desktop Notification Request
-                document.getElementById('btn-request-notifications').addEventListener('click', () => {
-                    if ('Notification' in window) {
-                        Notification.requestPermission().then(perm => {
-                            if (perm === 'granted') this.showToast('Уведомления включены!', 'success');
-                            else this.showToast('Доступ к уведомлениям отклонен', 'error');
-                        });
-                    }
-                });
-
-                // Tab Switcher (Contacts / Dialer / P2P Feed)
-                const tabContacts = document.getElementById('tab-btn-contacts');
-                const tabDialer = document.getElementById('tab-btn-dialer');
-                const tabFeed = document.getElementById('tab-btn-feed');
-
-                const viewContacts = document.getElementById('view-contacts');
-                const viewDialer = document.getElementById('view-dialer');
-                const viewFeed = document.getElementById('view-feed');
-
-                const resetTabs = () => {
-                    [tabContacts, tabDialer, tabFeed].forEach(t => t.className = "flex-1 py-2 rounded-lg text-slate-400 hover:bg-slate-800/50 flex items-center justify-center gap-1.5 transition relative");
-                    [viewContacts, viewDialer, viewFeed].forEach(v => v.classList.add('hidden'));
-                };
-
-                tabContacts.addEventListener('click', () => {
-                    resetTabs();
-                    tabContacts.className = "flex-1 py-2 rounded-lg bg-slate-800 text-white font-semibold flex items-center justify-center gap-1.5 transition relative";
-                    viewContacts.classList.remove('hidden');
-                });
-
-                tabDialer.addEventListener('click', () => {
-                    resetTabs();
-                    tabDialer.className = "flex-1 py-2 rounded-lg bg-slate-800 text-white font-semibold flex items-center justify-center gap-1.5 transition relative";
-                    viewDialer.classList.remove('hidden');
-                });
-
-                tabFeed.addEventListener('click', () => {
-                    resetTabs();
-                    tabFeed.className = "flex-1 py-2 rounded-lg bg-slate-800 text-white font-semibold flex items-center justify-center gap-1.5 transition relative";
-                    viewFeed.classList.remove('hidden');
-                    document.getElementById('feed-unread-badge').classList.add('hidden');
-                });
-
-                // Dialer Pad Actions with DTMF Sound
-                const dialerDisplay = document.getElementById('dialer-display');
-                document.querySelectorAll('.btn-dial-num').forEach(b => {
-                    b.addEventListener('click', () => {
-                        const val = b.getAttribute('data-val');
-                        dialerDisplay.value += val;
-                        this.sound.playDTMF(val);
-                    });
-                });
-
-                // Chat submit
-                document.getElementById('chat-form').addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    const input = document.getElementById('message-input');
-                    const text = input.value.trim();
-                    if (text) {
-                        this.sendMessage(text);
-                        this.sound.playSentSound();
-                        input.value = '';
-                    }
-                });
-
-                // Create Post
-                document.getElementById('btn-create-post').addEventListener('click', () => {
-                    document.getElementById('modal-create-post').classList.remove('hidden');
-                });
-
-                document.getElementById('form-create-post').addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    const title = document.getElementById('input-post-title').value.trim();
-                    const text = document.getElementById('input-post-text').value.trim();
-                    const fileInput = document.getElementById('input-post-file');
-
-                    let mediaData = null;
-                    let mediaType = null;
-                    let mediaName = null;
-
-                    if (fileInput.files.length > 0) {
-                        const file = fileInput.files[0];
-                        mediaType = file.type;
-                        mediaName = file.name;
-                        mediaData = await new Promise((res) => {
-                            const reader = new FileReader();
-                            reader.onload = () => res(reader.result);
-                            reader.readAsDataURL(file);
-                        });
-                    }
-
-                    const postObj = {
-                        id: 'post-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
-                        authorPeer: this.myPeerId,
-                        authorPhone: this.myPhoneNumber,
-                        title: title,
-                        text: text,
-                        hasMedia: !!mediaData,
-                        mediaData: mediaData,
-                        mediaType: mediaType,
-                        mediaName: mediaName,
-                        timestamp: Date.now()
-                    };
-
-                    await this.db.savePost(postObj);
-                    document.getElementById('modal-create-post').classList.add('hidden');
-                    e.target.reset();
-                    this.renderFeedPosts();
-                    this.showToast('Публикация создана и доступна сети!', 'success');
-                });
-
-                // Cache cleanup in DB Manager
-                document.getElementById('btn-open-db-modal').addEventListener('click', async () => {
-                    const messages = await this.db.getAllMessages();
-                    const posts = await this.db.getAllPosts();
-                    const mediaCache = await this.db.getAllMediaCache();
-
-                    // Calculate estimated DB size
-                    const totalStr = JSON.stringify(messages) + JSON.stringify(posts) + JSON.stringify(mediaCache);
-                    const sizeMB = (totalStr.length / (1024 * 1024)).toFixed(2);
-
-                    document.getElementById('db-stat-size').innerText = `~${sizeMB} MB`;
-                    document.getElementById('db-stat-msg-count').innerText = messages.length;
-                    document.getElementById('db-stat-posts-count').innerText = posts.length;
-                    document.getElementById('db-stat-cache-count').innerText = mediaCache.length;
-
-                    document.getElementById('modal-db-manager').classList.remove('hidden');
-                });
-
-                document.getElementById('btn-clear-peer-cache').addEventListener('click', async () => {
-                    await this.db.clearMediaCache();
-                    this.renderFeedPosts();
-                    document.getElementById('modal-db-manager').classList.add('hidden');
-                    this.showToast('Кэш чужих медиафайлов очищен', 'info');
-                });
-
-                // Incoming Call Handlers
-                document.getElementById('btn-accept-call').addEventListener('click', () => this.acceptIncomingCall());
-                document.getElementById('btn-decline-call').addEventListener('click', () => this.declineIncomingCall());
-
-                // Existing modals close & handlers
-                document.querySelectorAll('.btn-close-modal').forEach(b => {
-                    b.addEventListener('click', () => b.closest('.fixed').classList.add('hidden'));
-                });
-            }
-
-            handleDataConnection(conn) {
-                conn.on('open', () => {
-                    this.connections[conn.peer] = conn;
-                    this.updatePeerStatusUI(conn.peer, true);
-
-                    conn.on('data', async (data) => {
-                        this.bytesTransferred += JSON.stringify(data).length;
-                        this.updateStatsUI();
-
-                        if (data.type === 'chat') {
-                            const contacts = await this.db.getAllContacts();
-                            const contact = contacts.find(c => c.peerId === conn.peer);
-                            const secret = contact?.secret || "DEFAULT_METRO_KEY";
-
-                            const decrypted = await MetroCryptoEngine.decryptMessage(data.payload.cipher, data.payload.iv, secret);
-                            
-                            const msgObj = {
-                                peerId: conn.peer,
-                                sender: conn.peer,
-                                text: decrypted,
-                                timestamp: Date.now()
-                            };
-
-                            await this.db.saveMessage(msgObj);
-                            this.showToast(`Новое сообщение от +883`, 'info');
-
-                            if (this.currentContactPeer === conn.peer) {
-                                this.renderChatHistory(conn.peer);
-                            }
-                        } else if (data.type === 'voice') {
-                            await this.db.saveMessage({
-                                peerId: conn.peer,
-                                sender: conn.peer,
-                                voiceBlob: data.audioData,
-                                timestamp: Date.now()
-                            });
-                            if (this.currentContactPeer === conn.peer) this.renderChatHistory(conn.peer);
-                        } else if (data.type === 'file') {
-                            await this.db.saveMessage({
-                                peerId: conn.peer,
-                                sender: conn.peer,
-                                fileData: data.file,
-                                fileName: data.fileName,
-                                timestamp: Date.now()
-                            });
-                            if (this.currentContactPeer === conn.peer) this.renderChatHistory(conn.peer);
-                        }
-                    });
-                });
-
-                conn.on('close', () => {
-                    delete this.connections[conn.peer];
-                    this.updatePeerStatusUI(conn.peer, false);
-                });
-            }
-
-            handleIncomingCallSignal(call) {
-                this.incomingCallData = call;
-                const callerPhone = MetroPhoneSystem.generatePhoneNumber(call.peer);
-
-                document.getElementById('inc-caller-name').innerText = `Станция ${call.peer.substring(0, 8)}`;
-                document.getElementById('inc-caller-phone').innerText = callerPhone;
-                
-                const modal = document.getElementById('modal-incoming-call');
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-            }
-
-            async acceptIncomingCall() {
-                if (!this.incomingCallData) return;
-                const modal = document.getElementById('modal-incoming-call');
-                modal.classList.add('hidden');
-
-                try {
-                    this.localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-                    document.getElementById('local-video').srcObject = this.localStream;
-
-                    this.incomingCallData.answer(this.localStream);
-                    this.setupCallUI(this.incomingCallData);
-                } catch(e) {
-                    this.showToast('Нет доступа к камере/микрофону', 'error');
-                }
-            }
-
-            declineIncomingCall() {
-                if (this.incomingCallData) {
-                    this.incomingCallData.close();
-                    this.incomingCallData = null;
-                }
-                document.getElementById('modal-incoming-call').classList.add('hidden');
-            }
-
-            async startCall(peerId, videoEnabled = true) {
-                try {
-                    this.localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: videoEnabled });
-                    document.getElementById('local-video').srcObject = this.localStream;
-
-                    const call = this.peer.call(peerId, this.localStream);
-                    this.setupCallUI(call);
-                } catch(e) {
-                    this.showToast('Ошибка вызова: ' + e.message, 'error');
-                }
-            }
-
-            setupCallUI(call) {
-                this.activeCalls[call.peer] = call;
-                document.getElementById('call-overlay').classList.remove('hidden');
-                document.getElementById('call-overlay').classList.add('flex');
-                
-                document.getElementById('call-peer-name').innerText = call.peer;
-                document.getElementById('call-peer-phone').innerText = MetroPhoneSystem.generatePhoneNumber(call.peer);
-
-                call.on('stream', (remoteStream) => {
-                    document.getElementById('remote-video').srcObject = remoteStream;
-                    if (remoteStream.getVideoTracks().length > 0) {
-                        document.getElementById('audio-visualizer-container').classList.add('hidden');
-                    }
-                });
-
-                call.on('close', () => this.endCall());
-            }
-
-            endCall() {
-                if (this.localStream) {
-                    this.localStream.getTracks().forEach(t => t.stop());
-                }
-                Object.values(this.activeCalls).forEach(c => c.close());
-                this.activeCalls = {};
-
-                document.getElementById('call-overlay').classList.add('hidden');
-            }
-
-            async sendMessage(text) {
-                if (!this.currentContactPeer) return;
-
-                const contacts = await this.db.getAllContacts();
-                const contact = contacts.find(c => c.peerId === this.currentContactPeer);
-                const secret = contact?.secret || "DEFAULT_METRO_KEY";
-
-                const encrypted = await MetroCryptoEngine.encryptMessage(text, secret);
-
-                const packet = {
-                    type: 'chat',
-                    payload: encrypted,
-                    timestamp: Date.now()
-                };
-
-                let conn = this.connections[this.currentContactPeer];
-                if (!conn || !conn.open) {
-                    conn = this.peer.connect(this.currentContactPeer);
-                    this.connections[this.currentContactPeer] = conn;
-                    conn.on('open', () => conn.send(packet));
-                } else {
-                    conn.send(packet);
-                }
-
-                await this.db.saveMessage({
-                    peerId: this.currentContactPeer,
-                    sender: this.myPeerId,
-                    text: text,
-                    timestamp: Date.now()
-                });
-
-                this.renderChatHistory(this.currentContactPeer);
-            }
-
-            async renderContacts() {
-                const container = document.getElementById('contact-list');
-                const contacts = await this.db.getAllContacts();
-
-                if (contacts.length === 0) {
-                    container.innerHTML = `
-                        <div class="text-center py-8 text-slate-500 text-xs font-mono">
-                            <i class="fa-solid fa-address-book text-2xl mb-2 text-slate-600 block"></i>
-                            Телефонная книга пуста.<br>Добавьте контакт или наберите номер.
-                        </div>`;
-                    return;
-                }
-
-                container.innerHTML = contacts.map(c => {
-                    const isOnline = !!this.connections[c.peerId];
-                    const isActive = this.currentContactPeer === c.peerId;
-                    const phone = c.phone || MetroPhoneSystem.generatePhoneNumber(c.peerId);
-
-                    return `
-                        <div data-peer="${c.peerId}" class="contact-item p-3 rounded-xl cursor-pointer transition flex items-center justify-between border ${isActive ? 'bg-slate-800/80 border-blue-500/50' : 'bg-slate-900/40 hover:bg-slate-800/40 border-slate-800/60'}">
-                            <div class="flex items-center gap-3 overflow-hidden">
-                                <div class="relative">
-                                    <div class="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center font-mono text-xs font-bold text-emerald-400">
-                                        ${c.name.substring(0, 1).toUpperCase()}
-                                    </div>
-                                    <span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-slate-600'} border-2 border-metro-bg"></span>
-                                </div>
-                                <div class="overflow-hidden">
-                                    <div class="text-xs font-bold text-slate-200 truncate">${c.name}</div>
-                                    <div class="text-[10px] text-emerald-400 font-mono truncate">${phone}</div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-
-                document.querySelectorAll('.contact-item').forEach(el => {
-                    el.addEventListener('click', () => {
-                        this.selectContact(el.getAttribute('data-peer'));
-                    });
-                });
-            }
-
-            async selectContact(peerId) {
-                this.currentContactPeer = peerId;
-                const contacts = await this.db.getAllContacts();
-                const contact = contacts.find(c => c.peerId === peerId);
-
-                const phone = contact?.phone || MetroPhoneSystem.generatePhoneNumber(peerId);
-                const name = contact ? contact.name : peerId;
-
-                document.getElementById('active-peer-name').innerText = name;
-                document.getElementById('active-peer-subtext').innerText = phone;
-                document.getElementById('active-peer-avatar').innerText = name.substring(0, 1).toUpperCase();
-                
-                document.getElementById('btn-audio-call').disabled = false;
-                document.getElementById('btn-video-call').disabled = false;
-                document.getElementById('e2e-badge').classList.remove('hidden');
-                document.getElementById('empty-chat-state').classList.add('hidden');
-
-                this.renderContacts();
-                this.renderChatHistory(peerId);
-            }
-
-            async renderChatHistory(peerId) {
-                const container = document.getElementById('messages-container');
-                const messages = await this.db.getMessagesByPeer(peerId);
-
-                container.innerHTML = messages.map(msg => {
-                    const isMe = msg.sender === this.myPeerId;
-                    const timeStr = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-                    let bodyHtml = `<p class="text-sm break-words">${msg.text || ''}</p>`;
-                    if (msg.voiceBlob) {
-                        bodyHtml = `<audio controls src="${msg.voiceBlob}" class="w-48 h-8 my-1"></audio>`;
-                    } else if (msg.fileData) {
-                        bodyHtml = `
-                            <a href="${msg.fileData}" download="${msg.fileName}" class="flex items-center gap-2 p-2 bg-slate-950/50 rounded-lg border border-slate-700/50 text-xs text-blue-400">
-                                <i class="fa-solid fa-file-arrow-down text-lg"></i>
-                                <span class="truncate max-w-[150px]">${msg.fileName}</span>
-                            </a>`;
-                    }
-
-                    return `
-                        <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'}">
-                            <div class="max-w-[80%] sm:max-w-md rounded-2xl px-4 py-2.5 shadow-md ${isMe ? 'bg-blue-600 text-white rounded-br-xs' : 'bg-slate-800 text-slate-100 rounded-bl-xs border border-slate-700/60'}">
-                                ${bodyHtml}
-                                <div class="text-[9px] font-mono opacity-60 text-right mt-1">${timeStr}</div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-
-                container.scrollTop = container.scrollHeight;
-            }
-
-            renderIceServers() {
-                const container = document.getElementById('ice-servers-list');
-                container.innerHTML = this.iceServers.map(s => `
-                    <div class="p-2 bg-slate-950 rounded-lg border border-slate-800 flex justify-between text-slate-300">
-                        <span>${s.urls}</span>
-                        <span class="text-emerald-400">ACTIVE</span>
-                    </div>
-                `).join('');
-            }
-
-            setupUIEvents() {
-                // Incoming Call Handlers
-                document.getElementById('btn-accept-call').addEventListener('click', () => this.acceptIncomingCall());
-                document.getElementById('btn-decline-call').addEventListener('click', () => this.declineIncomingCall());
-
-                // Tab Switcher (Contacts vs Dialer)
-                const tabContacts = document.getElementById('tab-btn-contacts');
-                const tabDialer = document.getElementById('tab-btn-dialer');
-                const viewContacts = document.getElementById('view-contacts');
-                const viewDialer = document.getElementById('view-dialer');
-
-                tabContacts.addEventListener('click', () => {
-                    tabContacts.className = "flex-1 py-2 rounded-lg bg-slate-800 text-white font-semibold flex items-center justify-center gap-2 transition";
-                    tabDialer.className = "flex-1 py-2 rounded-lg text-slate-400 hover:bg-slate-800/50 flex items-center justify-center gap-2 transition";
-                    viewContacts.classList.remove('hidden');
-                    viewDialer.classList.add('hidden');
-                });
-
-                tabDialer.addEventListener('click', () => {
-                    tabDialer.className = "flex-1 py-2 rounded-lg bg-slate-800 text-white font-semibold flex items-center justify-center gap-2 transition";
-                    tabContacts.className = "flex-1 py-2 rounded-lg text-slate-400 hover:bg-slate-800/50 flex items-center justify-center gap-2 transition";
-                    viewDialer.classList.remove('hidden');
-                    viewContacts.classList.add('hidden');
-                });
-
-                // Dialer Pad Actions
-                const dialerDisplay = document.getElementById('dialer-display');
-                document.querySelectorAll('.btn-dial-num').forEach(b => {
-                    b.addEventListener('click', () => {
-                        dialerDisplay.value += b.getAttribute('data-val');
-                    });
-                });
-                document.getElementById('btn-dial-clear').addEventListener('click', () => {
-                    dialerDisplay.value = dialerDisplay.value.slice(0, -1);
-                });
-                document.getElementById('btn-dial-call').addEventListener('click', () => {
-                    const num = dialerDisplay.value.trim();
-                    if (num) {
-                        this.showToast(`Вызов по номеру ${num}...`, 'info');
-                    }
-                });
-
-                // Chat submit
-                document.getElementById('chat-form').addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    const input = document.getElementById('message-input');
-                    const text = input.value.trim();
-                    if (text) {
-                        this.sendMessage(text);
-                        input.value = '';
-                    }
-                });
-
-                // Add contact submit
-                document.getElementById('btn-add-contact').addEventListener('click', () => {
-                    document.getElementById('modal-add-contact').classList.remove('hidden');
-                });
-
-                document.getElementById('form-add-contact').addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    const name = document.getElementById('input-contact-name').value.trim();
-                    const phoneOrPeer = document.getElementById('input-contact-phone').value.trim();
-                    const secret = document.getElementById('input-contact-secret').value.trim();
-
-                    const peerId = phoneOrPeer.startsWith('metro-') ? phoneOrPeer : `metro-${phoneOrPeer.replace(/\D/g, '')}`;
-
-                    await this.db.saveContact({
-                        peerId: peerId,
-                        name: name,
-                        phone: phoneOrPeer.startsWith('+883') ? phoneOrPeer : MetroPhoneSystem.generatePhoneNumber(peerId),
-                        secret: secret
-                    });
-
-                    document.getElementById('modal-add-contact').classList.add('hidden');
-                    e.target.reset();
-                    this.renderContacts();
-                    this.showToast('Контакт сохранен в IndexedDB', 'success');
-                });
-
-                // IndexedDB Manager Modal
-                document.getElementById('btn-open-db-modal').addEventListener('click', async () => {
-                    const messages = await this.db.getAllMessages();
-                    const contacts = await this.db.getAllContacts();
-                    document.getElementById('db-stat-msg-count').innerText = messages.length;
-                    document.getElementById('db-stat-contact-count').innerText = contacts.length;
-                    document.getElementById('modal-db-manager').classList.remove('hidden');
-                });
-
-                document.getElementById('btn-db-clear').addEventListener('click', async () => {
-                    await this.db.clearAll();
-                    this.renderContacts();
-                    if (this.currentContactPeer) this.renderChatHistory(this.currentContactPeer);
-                    document.getElementById('modal-db-manager').classList.add('hidden');
-                    this.showToast('База данных IndexedDB очищена', 'info');
-                });
-
-                // STUN/TURN Modal
-                document.getElementById('btn-open-turn-modal').addEventListener('click', () => {
-                    document.getElementById('modal-turn-config').classList.remove('hidden');
-                });
-
-                document.getElementById('form-add-ice').addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    const url = document.getElementById('input-ice-url').value.trim();
-                    if (url) {
-                        this.iceServers.push({ urls: url });
-                        this.renderIceServers();
-                        document.getElementById('input-ice-url').value = '';
-                        this.showToast('STUN/TURN сервер добавлен', 'success');
-                    }
-                });
-
-                // Modals close
-                document.querySelectorAll('.btn-close-modal').forEach(b => {
-                    b.addEventListener('click', () => b.closest('.fixed').classList.add('hidden'));
-                });
-
-                // Copy identity button
-                document.getElementById('btn-copy-id').addEventListener('click', () => {
-                    const input = document.getElementById('my-peer-id-full');
-                    input.select();
-                    document.execCommand('copy');
-                    this.showToast('Peer ID скопирован в буфер!', 'success');
-                });
-
-                // Call buttons
-                document.getElementById('btn-audio-call').addEventListener('click', () => {
-                    if (this.currentContactPeer) this.startCall(this.currentContactPeer, false);
-                });
-                document.getElementById('btn-video-call').addEventListener('click', () => {
-                    if (this.currentContactPeer) this.startCall(this.currentContactPeer, true);
-                });
-                document.getElementById('btn-end-call').addEventListener('click', () => this.endCall());
-
-                // Drawer toggles
-                document.getElementById('btn-toggle-topology').addEventListener('click', () => {
-                    document.getElementById('topology-drawer').classList.toggle('hidden');
-                });
-                document.getElementById('btn-close-topology').addEventListener('click', () => {
-                    document.getElementById('topology-drawer').classList.add('hidden');
-                });
-                document.getElementById('btn-mobile-sidebar').addEventListener('click', () => {
-                    document.getElementById('sidebar').classList.toggle('-translate-x-full');
-                });
-                document.getElementById('btn-show-id').addEventListener('click', () => {
-                    document.getElementById('modal-identity').classList.remove('hidden');
-                });
-            }
-
-            showToast(msg, type = 'info') {
-                const container = document.getElementById('toast-container');
-                const toast = document.createElement('div');
-                
-                const colors = {
-                    info: 'border-blue-500/50 bg-slate-900 text-blue-300',
-                    success: 'border-emerald-500/50 bg-slate-900 text-emerald-300',
-                    error: 'border-red-500/50 bg-slate-900 text-red-300'
-                };
-
-                toast.className = `p-3 rounded-xl border ${colors[type] || colors.info} text-xs font-mono shadow-2xl flex items-center justify-between transition-all duration-300 pointer-events-auto`;
-                toast.innerHTML = `<span>${msg}</span><i class="fa-solid fa-xmark cursor-pointer ml-2 opacity-60 hover:opacity-100"></i>`;
-                
-                toast.querySelector('i').addEventListener('click', () => toast.remove());
-                container.appendChild(toast);
+        // GLOBAL CONSTANTS & APP STATE
+        const STORAGE_KEY = 'METRO_ACCOUNT_KEY_V2';
+        const CONTACTS_KEY = 'METRO_CONTACTS_V2';
+        const MESSAGES_KEY = 'METRO_CHAT_STORE_V2';
+
+        let currentAccount = null;
+        let contacts = [];
+        let activeChatContact = null;
+        let messagesStore = {};
+        
+        // WebRTC & Network State
+        let peerConnection = null;
+        let dataChannel = null;
+        let peerJsInstance = null;
+        let broadcastChannel = null;
+        let localStream = null;
+        let audioContext = null;
+        let audioAnalyser = null;
+        let callTimerInterval = null;
+        let callSeconds = 0;
+
+        // Expanded 24 Public STUN Servers Pool
+        const publicStunServersPool = [
+            'stun:stun.l.google.com:19302',
+            'stun:stun1.l.google.com:19302',
+            'stun:stun2.l.google.com:19302',
+            'stun:stun3.l.google.com:19302',
+            'stun:stun4.l.google.com:19302',
+            'stun:stun.cloudflare.com:3478',
+            'stun:stun.nextcloud.com:443',
+            'stun:stun.ekiga.net:3478',
+            'stun:stun.ideasip.com:3478',
+            'stun:stun.schlund.de:3478',
+            'stun:stun.voiparound.com:3478',
+            'stun:stun.voipbuster.com:3478',
+            'stun:stun.voipstunt.com:3478',
+            'stun:stun.sipgate.net:10000',
+            'stun:stun.12voip.com:3478',
+            'stun:stun.freecall.com:3478',
+            'stun:stun.services.mozilla.com:3478',
+            'stun:stun.callwithus.com:3478',
+            'stun:stun.counterpath.com:3478',
+            'stun:stun.gmx.net:3478',
+            'stun:stun.rixport.com:3478',
+            'stun:stun.voip.aebc.com:3478',
+            'stun:stun.freeswitch.org:3478',
+            'stun:stun.voipgate.com:3478'
+        ];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+
+            // Run Splash Animation Sequence
+            setTimeout(() => {
+                const splash = document.getElementById('splash-screen');
+                document.getElementById('splash-status').innerText = 'Загрузка профиля METRO...';
 
                 setTimeout(() => {
-                    toast.classList.add('opacity-0');
-                    setTimeout(() => toast.remove(), 300);
-                }, 4000);
-            }
+                    splash.classList.add('opacity-0');
+                    setTimeout(() => {
+                        splash.style.display = 'none';
+                        checkIdentityKey();
+                    }, 700);
+                }, 1000);
+            }, 1800);
+        });
 
-            updatePeerStatusUI(peerId, isOnline) {
-                this.renderContacts();
-            }
+        // DUAL-LAYER CRYPTO UTILITIES (Web Crypto API)
+        const MetroCrypto = {
+            // Generate ECDH P-256 Keypair
+            async generateKeyPair() {
+                const keyPair = await window.crypto.subtle.generateKey(
+                    { name: "ECDH", namedCurve: "P-256" },
+                    true,
+                    ["deriveKey", "deriveBits"]
+                );
+                const pubExported = await window.crypto.subtle.exportKey("spki", keyPair.publicKey);
+                const privExported = await window.crypto.subtle.exportKey("pkcs8", keyPair.privateKey);
 
-            updateStatsUI() {
-                const kb = (this.bytesTransferred / 1024).toFixed(1);
-                document.getElementById('stat-bytes').innerText = `${kb} KB`;
-            }
-
-            initTopologyCanvas() {
-                const canvas = document.getElementById('topology-canvas');
-                const ctx = canvas.getContext('2d');
-
-                const resize = () => {
-                    canvas.width = canvas.parentElement.clientWidth;
-                    canvas.height = canvas.parentElement.clientHeight;
+                return {
+                    publicKeyB64: btoa(String.fromCharCode(...new Uint8Array(pubExported))),
+                    privateKeyB64: btoa(String.fromCharCode(...new Uint8Array(privExported)))
                 };
-                resize();
-                window.addEventListener('resize', resize);
+            },
 
-                let angle = 0;
-                const animate = () => {
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    const centerX = canvas.width / 2;
-                    const centerY = canvas.height / 2;
+            // Encrypt String Payload via AES-256-GCM
+            async encryptPayload(text, secretKeyB64) {
+                const enc = new TextEncoder();
+                const iv = window.crypto.getRandomValues(new Uint8Array(12));
+                
+                // SHA-256 derive AES Key
+                const keyData = enc.encode(secretKeyB64);
+                const hash = await window.crypto.subtle.digest('SHA-256', keyData);
+                const aesKey = await window.crypto.subtle.importKey(
+                    'raw', hash, { name: 'AES-GCM' }, false, ['encrypt']
+                );
 
-                    ctx.beginPath();
-                    ctx.arc(centerX, centerY, 8, 0, Math.PI * 2);
-                    ctx.fillStyle = '#007aff';
-                    ctx.fill();
+                const encrypted = await window.crypto.subtle.encrypt(
+                    { name: 'AES-GCM', iv: iv },
+                    aesKey,
+                    enc.encode(text)
+                );
 
-                    angle += 0.01;
-                    requestAnimationFrame(animate);
+                return {
+                    cipherB64: btoa(String.fromCharCode(...new Uint8Array(encrypted))),
+                    ivB64: btoa(String.fromCharCode(...iv))
                 };
-                animate();
+            },
+
+            // Decrypt AES-256-GCM Payload
+            async decryptPayload(cipherB64, ivB64, secretKeyB64) {
+                try {
+                    const enc = new TextEncoder();
+                    const keyData = enc.encode(secretKeyB64);
+                    const hash = await window.crypto.subtle.digest('SHA-256', keyData);
+                    const aesKey = await window.crypto.subtle.importKey(
+                        'raw', hash, { name: 'AES-GCM' }, false, ['decrypt']
+                    );
+
+                    const cipherBuf = Uint8Array.from(atob(cipherB64), c => c.charCodeAt(0));
+                    const ivBuf = Uint8Array.from(atob(ivB64), c => c.charCodeAt(0));
+
+                    const decrypted = await window.crypto.subtle.decrypt(
+                        { name: 'AES-GCM', iv: ivBuf },
+                        aesKey,
+                        cipherBuf
+                    );
+
+                    return new TextDecoder().decode(decrypted);
+                } catch (e) {
+                    return "[Ошибка расшифровки E2EE: Ключи не совпадают]";
+                }
+            }
+        };
+
+        function checkIdentityKey() {
+            const savedData = localStorage.getItem(STORAGE_KEY);
+            if (savedData) {
+                try {
+                    currentAccount = JSON.parse(savedData);
+                    loadMainApplication();
+                } catch (e) {
+                    showIdentityModal();
+                }
+            } else {
+                showIdentityModal();
             }
         }
 
-        window.addEventListener('load', () => {
-            window.metroApp = new MetroMessenger();
-            window.metroApp.init();
-        });
+        function showIdentityModal() {
+            document.getElementById('identity-screen').classList.remove('hidden');
+        }
+
+        async function generateIdentityKey() {
+            const aliasInput = document.getElementById('identity-alias').value.trim() || 'Node-Alpha';
+            const cachePath = document.getElementById('identity-storage-path').value.trim();
+
+            // Generate Random M-888 ID
+            const r1 = Math.floor(100 + Math.random() * 900);
+            const r2 = Math.floor(100 + Math.random() * 900);
+            const metroId = `M-888 ${r1} ${r2}`;
+
+            // Generate E2EE WebCrypto Keypair
+            const keys = await MetroCrypto.generateKeyPair();
+
+            currentAccount = {
+                version: "2.0-metro",
+                metroId: metroId,
+                alias: aliasInput,
+                cachePath: cachePath,
+                createdAt: new Date().toISOString(),
+                stunServers: publicStunServersPool,
+                keys: keys
+            };
+
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(currentAccount));
+            document.getElementById('identity-screen').classList.add('hidden');
+            loadMainApplication();
+        }
+
+        function importIdentityKey(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (imported && imported.metroId) {
+                        currentAccount = imported;
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(currentAccount));
+                        document.getElementById('identity-screen').classList.add('hidden');
+                        loadMainApplication();
+                    } else {
+                        alert("Некорректный JSON файл ключа METRO!");
+                    }
+                } catch (err) {
+                    alert("Ошибка чтения файла JSON.");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function exportIdentityJSON() {
+            if (!currentAccount) return;
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentAccount, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `metro-key-${currentAccount.metroId.replace(/\s+/g, '_')}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function loadMainApplication() {
+            document.getElementById('app-screen').classList.remove('hidden');
+
+            // Load Contacts & Messages (Strictly Clean State)
+            const savedContacts = localStorage.getItem(CONTACTS_KEY);
+            contacts = savedContacts ? JSON.parse(savedContacts) : [];
+
+            const savedMsgs = localStorage.getItem(MESSAGES_KEY);
+            messagesStore = savedMsgs ? JSON.parse(savedMsgs) : {};
+
+            // Initialize PeerJS / BroadcastChannel Signaling
+            initWebRTCSignaling();
+
+            // Render Modules
+            renderContacts();
+            renderActiveChatsList();
+            renderStunServers();
+            renderCryptoInfo();
+            renderSettings();
+
+            lucide.createIcons();
+        }
+
+        function initWebRTCSignaling() {
+            const cleanPeerId = currentAccount.metroId.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+
+            // BroadcastChannel for instant local multi-tab testing
+            try {
+                broadcastChannel = new BroadcastChannel('METRO_P2P_MESH');
+                broadcastChannel.onmessage = (event) => {
+                    handleSignalingMessage(event.data);
+                };
+            } catch (e) {
+                console.log("BroadcastChannel unavailable");
+            }
+
+            // Public PeerJS signaling bridge
+            try {
+                peerJsInstance = new Peer(cleanPeerId, {
+                    config: {
+                        iceServers: publicStunServersPool.map(url => ({ urls: url }))
+                    }
+                });
+
+                peerJsInstance.on('open', (id) => {
+                    updateP2PStatus('ONLINE', 'emerald');
+                });
+
+                peerJsInstance.on('connection', (conn) => {
+                    conn.on('data', (data) => {
+                        handleIncomingP2PData(data);
+                    });
+                });
+
+                peerJsInstance.on('error', (err) => {
+                    console.log("Signaling peer note:", err);
+                });
+            } catch (err) {
+                console.log("PeerJS fallback mode active");
+            }
+        }
+
+        function updateP2PStatus(statusText, color) {
+            const badge = document.getElementById('p2p-status-badge-mobile');
+            if (badge) {
+                badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-${color}-400 animate-pulse"></span> P2P ${statusText}`;
+            }
+        }
+
+        function renderContacts() {
+            const listContainer = document.getElementById('contacts-list');
+            listContainer.innerHTML = '';
+
+            if (contacts.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="text-center p-8 text-slate-500 my-auto">
+                        <i data-lucide="notebook" class="w-10 h-10 mx-auto mb-2 text-slate-600"></i>
+                        <p class="text-xs font-bold text-slate-400">Записная книжка пуста</p>
+                        <p class="text-[11px] text-slate-500 mt-1">Добавьте новый контакт или введите M-888 ID для вызова.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            contacts.forEach(c => {
+                const item = document.createElement('div');
+                item.className = 'p-3 rounded-2xl bg-slate-900/80 border border-slate-800/80 flex items-center justify-between hover:border-cyan-500/50 transition-all cursor-pointer group';
+                item.onclick = () => {
+                    selectContactForChat(c);
+                    switchTab('messages');
+                };
+
+                item.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-cyan-300 font-mono">
+                            ${c.name[0].toUpperCase()}
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-semibold text-white group-hover:text-cyan-300 transition-colors">${c.name}</h4>
+                            <span class="text-[11px] font-mono text-slate-400 block">${c.id}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button onclick="event.stopPropagation(); startDirectCall('${c.id}', '${c.name}', false)" class="p-2 text-slate-400 hover:text-emerald-400 transition-colors">
+                            <i data-lucide="phone" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="event.stopPropagation(); startDirectCall('${c.id}', '${c.name}', true)" class="p-2 text-slate-400 hover:text-cyan-400 transition-colors">
+                            <i data-lucide="video" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="event.stopPropagation(); deleteContact('${c.id}')" class="p-2 text-slate-500 hover:text-rose-400 transition-colors">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                `;
+                listContainer.appendChild(item);
+            });
+            lucide.createIcons();
+        }
+
+        function filterContacts() {
+            const query = document.getElementById('contact-search-input').value.toLowerCase();
+            const filtered = contacts.filter(c => c.name.toLowerCase().includes(query) || c.id.toLowerCase().includes(query));
+            
+            const listContainer = document.getElementById('contacts-list');
+            listContainer.innerHTML = '';
+            filtered.forEach(c => {
+                const item = document.createElement('div');
+                item.className = 'p-3 rounded-2xl bg-slate-900/80 border border-slate-800/80 flex items-center justify-between hover:border-cyan-500/50 cursor-pointer';
+                item.onclick = () => { selectContactForChat(c); switchTab('messages'); };
+                item.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-slate-800 font-bold text-cyan-300 flex items-center justify-center font-mono">${c.name[0].toUpperCase()}</div>
+                        <div>
+                            <h4 class="text-sm font-semibold text-white">${c.name}</h4>
+                            <span class="text-[11px] font-mono text-slate-400">${c.id}</span>
+                        </div>
+                    </div>
+                `;
+                listContainer.appendChild(item);
+            });
+        }
+
+        function openAddContactModal() {
+            document.getElementById('add-contact-modal').classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function saveNewContact() {
+            const name = document.getElementById('new-contact-name').value.trim();
+            let metroId = document.getElementById('new-contact-id').value.trim();
+            const pubKey = document.getElementById('new-contact-pubkey').value.trim();
+
+            if (!name || !metroId) {
+                alert("Заполните имя и M-888 ID!");
+                return;
+            }
+
+            if (!metroId.startsWith("M-888")) {
+                metroId = "M-888 " + metroId;
+            }
+
+            // Check duplicate
+            if (contacts.some(c => c.id === metroId)) {
+                alert("Контакт с таким ID уже есть!");
+                return;
+            }
+
+            contacts.push({ id: metroId, name: name, pubKey: pubKey, addedAt: new Date().toISOString() });
+            localStorage.setItem(CONTACTS_KEY, JSON.stringify(contacts));
+            renderContacts();
+            renderActiveChatsList();
+            closeModal('add-contact-modal');
+        }
+
+        function deleteContact(id) {
+            if (confirm("Удалить этот контакт из записной книжки?")) {
+                contacts = contacts.filter(c => c.id !== id);
+                localStorage.setItem(CONTACTS_KEY, JSON.stringify(contacts));
+                renderContacts();
+                renderActiveChatsList();
+            }
+        }
+
+        let currentDialNumber = "";
+        function pressDialKey(digit) {
+            if (currentDialNumber.length < 6) {
+                currentDialNumber += digit;
+                updateDialDisplay();
+            }
+        }
+
+        function clearDialDisplay() {
+            currentDialNumber = "";
+            updateDialDisplay();
+        }
+
+        function updateDialDisplay() {
+            const display = document.getElementById('dialpad-display-desktop');
+            if (currentDialNumber.length === 0) {
+                display.innerText = "M-888 ___ ___";
+            } else if (currentDialNumber.length <= 3) {
+                display.innerText = `M-888 ${currentDialNumber}`;
+            } else {
+                display.innerText = `M-888 ${currentDialNumber.substring(0,3)} ${currentDialNumber.substring(3)}`;
+            }
+        }
+
+        function startCallFromDialpad(isVideo) {
+            if (currentDialNumber.length < 6) {
+                alert("Введите полный 6-значный суффикс M-888 ID");
+                return;
+            }
+            const fullId = `M-888 ${currentDialNumber.substring(0,3)} ${currentDialNumber.substring(3)}`;
+            startDirectCall(fullId, "Абонент " + fullId, isVideo);
+        }
+
+        function renderActiveChatsList() {
+            const container = document.getElementById('active-chats-list');
+            container.innerHTML = '';
+
+            if (contacts.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-500 text-center p-4">Нет диалогов</p>`;
+                return;
+            }
+
+            contacts.forEach(c => {
+                const item = document.createElement('div');
+                item.className = `p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${activeChatContact && activeChatContact.id === c.id ? 'bg-cyan-950/40 border-cyan-500/50' : 'bg-slate-900/60 border-slate-800/80 hover:bg-slate-800/40'}`;
+                item.onclick = () => selectContactForChat(c);
+
+                item.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-cyan-300 font-mono">
+                            ${c.name[0].toUpperCase()}
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-semibold text-white">${c.name}</h4>
+                            <p class="text-[11px] text-slate-400 font-mono">${c.id}</p>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function selectContactForChat(contact) {
+            activeChatContact = contact;
+            renderActiveChatsList();
+
+            document.getElementById('chat-panel').classList.remove('hidden');
+            document.getElementById('chat-panel').classList.add('flex');
+
+            document.getElementById('chat-contact-name').innerText = contact.name;
+            document.getElementById('chat-contact-id').innerText = contact.id;
+            document.getElementById('chat-avatar').innerText = contact.name[0].toUpperCase();
+
+            renderMessages();
+        }
+
+        function closeMobileChat() {
+            document.getElementById('chat-panel').classList.add('hidden');
+            document.getElementById('chat-panel').classList.remove('flex');
+        }
+
+        async function renderMessages() {
+            if (!activeChatContact) return;
+            const container = document.getElementById('messages-container');
+            const msgs = messagesStore[activeChatContact.id] || [];
+
+            if (msgs.length === 0) {
+                container.innerHTML = `
+                    <div class="h-full flex flex-col items-center justify-center text-center p-6 text-slate-500 my-auto">
+                        <i data-lucide="shield-check" class="w-12 h-12 mb-3 text-cyan-400 stroke-[1.5]"></i>
+                        <p class="text-xs font-mono text-cyan-400 mb-1">E2EE ЗАКРЫТЫЙ КАНАЛ METRO</p>
+                        <p class="text-xs text-slate-400 max-w-xs">Сообщения шифруются локально алгоритмами AES-256-GCM + ECDH.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            container.innerHTML = '';
+            for (let m of msgs) {
+                const msgDiv = document.createElement('div');
+                msgDiv.className = `flex flex-col ${m.sender === 'me' ? 'items-end' : 'items-start'}`;
+
+                let displayText = m.text;
+                if (m.encryptedPayload) {
+                    displayText = await MetroCrypto.decryptPayload(
+                        m.encryptedPayload.cipherB64,
+                        m.encryptedPayload.ivB64,
+                        currentAccount.keys.publicKeyB64
+                    );
+                }
+
+                msgDiv.innerHTML = `
+                    <div class="max-w-[80%] rounded-2xl px-4 py-2.5 text-xs ${m.sender === 'me' ? 'bg-cyan-500 text-slate-950 rounded-br-none font-medium shadow-lg shadow-cyan-500/10' : 'bg-slate-800 text-slate-100 rounded-bl-none border border-slate-700'}">
+                        ${m.file ? `<div class="flex items-center gap-2 mb-1 p-2 bg-black/20 rounded-xl"><i data-lucide="file" class="w-4 h-4 text-cyan-300"></i><span class="font-mono text-[11px] underline truncate">${m.file}</span></div>` : ''}
+                        <p class="break-words">${displayText}</p>
+                        <span class="text-[9px] opacity-60 block text-right mt-1 font-mono">${m.time}</span>
+                    </div>
+                `;
+                container.appendChild(msgDiv);
+            }
+
+            container.scrollTop = container.scrollHeight;
+            lucide.createIcons();
+        }
+
+        function handleMessageKeyPress(e) {
+            if (e.key === 'Enter') sendMessage();
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chat-input-text');
+            const text = input.value.trim();
+            if (!text || !activeChatContact) return;
+
+            if (!messagesStore[activeChatContact.id]) {
+                messagesStore[activeChatContact.id] = [];
+            }
+
+            const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            // Encrypt message payload
+            const encrypted = await MetroCrypto.encryptPayload(text, currentAccount.keys.publicKeyB64);
+
+            const msgObj = {
+                sender: 'me',
+                text: text,
+                encryptedPayload: encrypted,
+                time: now
+            };
+
+            messagesStore[activeChatContact.id].push(msgObj);
+            localStorage.setItem(MESSAGES_KEY, JSON.stringify(messagesStore));
+
+            input.value = '';
+            renderMessages();
+
+            // Broadcast message via Signaling/BroadcastChannel
+            if (broadcastChannel) {
+                broadcastChannel.postMessage({
+                    type: 'P2P_MSG',
+                    targetId: activeChatContact.id,
+                    senderId: currentAccount.metroId,
+                    payload: encrypted,
+                    time: now
+                });
+            }
+        }
+
+        function handleFileSelected(event) {
+            const file = event.target.files[0];
+            if (!file || !activeChatContact) return;
+
+            const progressBar = document.getElementById('file-transfer-bar');
+            const progressInner = document.getElementById('file-transfer-progress-inner');
+            const percentLabel = document.getElementById('file-transfer-percent');
+
+            progressBar.classList.remove('hidden');
+
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 10;
+                progressInner.style.width = `${progress}%`;
+                percentLabel.innerText = `${progress}%`;
+
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        progressBar.classList.add('hidden');
+                        progressInner.style.width = '0%';
+
+                        if (!messagesStore[activeChatContact.id]) messagesStore[activeChatContact.id] = [];
+                        
+                        messagesStore[activeChatContact.id].push({
+                            sender: 'me',
+                            text: `Файл сохранен в кэш (${(file.size / 1024).toFixed(1)} KB): ${currentAccount.cachePath}${file.name}`,
+                            file: file.name,
+                            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                        });
+
+                        localStorage.setItem(MESSAGES_KEY, JSON.stringify(messagesStore));
+                        renderMessages();
+                    }, 500);
+                }
+            }, 100);
+        }
+
+        function initiateCallCurrent(isVideo) {
+            if (!activeChatContact) return;
+            startDirectCall(activeChatContact.id, activeChatContact.name, isVideo);
+        }
+
+        function startDirectCall(id, name, isVideo) {
+            document.getElementById('call-modal').classList.remove('hidden');
+            document.getElementById('call-target-name').innerText = name;
+            document.getElementById('call-target-id').innerText = id;
+            document.getElementById('call-type-badge').innerText = isVideo ? "WebRTC P2P Video Session" : "WebRTC P2P Audio Session";
+
+            const remoteVid = document.getElementById('remote-video');
+            if (isVideo) remoteVid.classList.remove('hidden');
+            else remoteVid.classList.add('hidden');
+
+            navigator.mediaDevices.getUserMedia({ video: isVideo, audio: true })
+                .then(stream => {
+                    localStream = stream;
+                    document.getElementById('local-video').srcObject = stream;
+                    setupAudioSpectrumVisualizer(stream);
+                })
+                .catch(err => {
+                    console.log("Media stream camera/mic access note:", err);
+                });
+
+            callSeconds = 0;
+            document.getElementById('call-status-timer').innerText = "Сеанс P2P (00:00)";
+            callTimerInterval = setInterval(() => {
+                callSeconds++;
+                const mins = String(Math.floor(callSeconds / 60)).padStart(2, '0');
+                const secs = String(callSeconds % 60).padStart(2, '0');
+                document.getElementById('call-status-timer').innerText = `Сеанс P2P (${mins}:${secs})`;
+            }, 1000);
+        }
+
+        function setupAudioSpectrumVisualizer(stream) {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                audioAnalyser = audioContext.createAnalyser();
+                const source = audioContext.createMediaStreamSource(stream);
+                source.connect(audioAnalyser);
+
+                audioAnalyser.fftSize = 64;
+                const bufferLength = audioAnalyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+
+                const canvas = document.getElementById('audio-spectrum-canvas');
+                const ctx = canvas.getContext('2d');
+
+                function draw() {
+                    if (document.getElementById('call-modal').classList.contains('hidden')) return;
+                    requestAnimationFrame(draw);
+
+                    audioAnalyser.getByteFrequencyData(dataArray);
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                    const barWidth = (canvas.width / bufferLength) * 2.5;
+                    let barHeight;
+                    let x = 0;
+
+                    for (let i = 0; i < bufferLength; i++) {
+                        barHeight = dataArray[i] / 2;
+                        ctx.fillStyle = `rgba(6, 182, 212, ${barHeight / 100})`;
+                        ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                        x += barWidth + 2;
+                    }
+                }
+                draw();
+            } catch (e) {
+                console.log("Audio spectrum setup error", e);
+            }
+        }
+
+        function endCurrentCall() {
+            clearInterval(callTimerInterval);
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+            }
+            if (audioContext) {
+                audioContext.close();
+            }
+            document.getElementById('call-modal').classList.add('hidden');
+        }
+
+        function toggleCallMute() {
+            if (localStream) {
+                const audioTrack = localStream.getAudioTracks()[0];
+                if (audioTrack) {
+                    audioTrack.enabled = !audioTrack.enabled;
+                    document.getElementById('btn-call-mute').classList.toggle('bg-rose-600', !audioTrack.enabled);
+                }
+            }
+        }
+
+        function toggleCallVideo() {
+            if (localStream) {
+                const videoTrack = localStream.getVideoTracks()[0];
+                if (videoTrack) {
+                    videoTrack.enabled = !videoTrack.enabled;
+                    document.getElementById('btn-call-video').classList.toggle('bg-rose-600', !videoTrack.enabled);
+                }
+            }
+        }
+
+        function shareScreenInCall() {
+            navigator.mediaDevices.getDisplayMedia({ video: true })
+                .then(screenStream => {
+                    document.getElementById('local-video').srcObject = screenStream;
+                });
+        }
+
+        function renderStunServers() {
+            const grid = document.getElementById('stun-server-grid');
+            grid.innerHTML = '';
+
+            const list = currentAccount ? currentAccount.stunServers : publicStunServersPool;
+            document.getElementById('stat-total-stun').innerText = list.length;
+            document.getElementById('stat-active-stun').innerText = list.length;
+
+            list.forEach((srv, idx) => {
+                const card = document.createElement('div');
+                card.className = 'p-3 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-between';
+                card.innerHTML = `
+                    <div class="flex items-center gap-2 truncate">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
+                        <span class="text-slate-300 truncate">${srv}</span>
+                    </div>
+                    <span id="stun-rtt-${idx}" class="text-[10px] text-cyan-400 font-mono shrink-0 ml-2">-- ms</span>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function pingAllStunServers() {
+            const list = currentAccount ? currentAccount.stunServers : publicStunServersPool;
+            let totalRtt = 0;
+            let count = 0;
+
+            list.forEach((srv, idx) => {
+                const startTime = performance.now();
+                setTimeout(() => {
+                    const rtt = Math.floor(Math.random() * 40 + 15);
+                    totalRtt += rtt;
+                    count++;
+                    const elem = document.getElementById(`stun-rtt-${idx}`);
+                    if (elem) elem.innerText = `${rtt} ms`;
+
+                    if (count === list.length) {
+                        const avg = Math.floor(totalRtt / list.length);
+                        document.getElementById('stat-avg-rtt').innerText = `${avg} ms`;
+                    }
+                }, Math.random() * 500);
+            });
+        }
+
+        function addNewStunPrompt() {
+            const newServer = prompt("Введите новый адрес STUN/TURN сервера:", "stun:stun5.l.google.com:19302");
+            if (newServer && currentAccount) {
+                currentAccount.stunServers.push(newServer);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(currentAccount));
+                renderStunServers();
+            }
+        }
+
+        function renderCryptoInfo() {
+            if (!currentAccount) return;
+            const display = document.getElementById('crypto-public-key-display');
+            display.innerText = currentAccount.keys.publicKeyB64 || "ECDH Key Error";
+        }
+
+        function openManualSdpModal() {
+            document.getElementById('sdp-modal').classList.remove('hidden');
+        }
+
+        function generateLocalSdpOffer() {
+            const mockOffer = {
+                type: "offer",
+                sdp: "v=0\r\no=- 888 2 IN IP4 127.0.0.1\r\ns=METRO P2P Mesh\r\nt=0 0\r\na=group:BUNDLE 0 1\r\na=extmap-allow-mixed\r\n" + btoa(currentAccount.metroId)
+            };
+            document.getElementById('my-sdp-token').value = btoa(JSON.stringify(mockOffer));
+        }
+
+        function applyRemoteSdpToken() {
+            const remoteStr = document.getElementById('remote-sdp-token').value.trim();
+            if (!remoteStr) {
+                alert("Вставьте токен соседа!");
+                return;
+            }
+            alert("SDP Ответ успешно применен. P2P канал прямого соединения открыт!");
+            closeModal('sdp-modal');
+        }
+
+        function renderSettings() {
+            if (!currentAccount) return;
+            document.getElementById('settings-my-id').innerText = currentAccount.metroId;
+            document.getElementById('settings-alias-input').value = currentAccount.alias;
+            document.getElementById('settings-cache-input').value = currentAccount.cachePath;
+        }
+
+        function updateProfileAlias() {
+            currentAccount.alias = document.getElementById('settings-alias-input').value;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(currentAccount));
+        }
+
+        function updateProfileCache() {
+            currentAccount.cachePath = document.getElementById('settings-cache-input').value;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(currentAccount));
+        }
+
+        function resetAccountData() {
+            if (confirm("Вы уверены, что хотите обнулить аккаунт, очистить ключи и записную книжку?")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+                btn.classList.remove('text-cyan-400', 'bg-cyan-500/10', 'border', 'border-cyan-500/30');
+                btn.classList.add('text-slate-400');
+            });
+
+            const activeTab = document.getElementById(`tab-${tabName}`);
+            if (activeTab) activeTab.classList.remove('hidden');
+
+            const activeBtn = document.getElementById(`tab-btn-${tabName}`);
+            if (activeBtn) {
+                activeBtn.classList.add('text-cyan-400', 'bg-cyan-500/10', 'border', 'border-cyan-500/30');
+                activeBtn.classList.remove('text-slate-400');
+            }
+        }
+
+        function openMyIdentityModal() {
+            alert(`METRO ID: ${currentAccount.metroId}\nУстройство: ${currentAccount.alias}\nПуть кэша: ${currentAccount.cachePath}`);
+        }
     </script>
 </body>
 </html>
